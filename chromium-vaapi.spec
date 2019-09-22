@@ -7,9 +7,9 @@
 ### Note: These are for Fedora use ONLY.
 ### For your own distribution, please get your own set of keys.
 ### http://lists.debian.org/debian-legal/2013/11/msg00006.html
-%global api_key AIzaSyDUIXvzVrt5OkVsgXhQ6NFfvWlA44by-aw
-%global default_client_id 449907151817.apps.googleusercontent.com
-%global default_client_secret miEreAep8nuvTdvLums6qyLK
+%global api_key %{nil}
+%global default_client_id %{nil}
+%global default_client_secret %{nil}
 ###############################Exclude Private chromium libs###########################
 %global __requires_exclude %{chromiumdir}/.*\\.so
 %global __provides_exclude_from %{chromiumdir}/.*\\.so
@@ -77,6 +77,8 @@ Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/c
 # ./chromium-latest.py --stable --ffmpegclean --ffmpegarm --deleteunrar
 Source0:   chromium-%{version}-clean.tar.xz
 %endif
+%global ungoogled_chromium_revision 76.0.3809.132-1
+Source300: https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 # The following two source files are copied and modified from the chromium source
 Source10:  %{name}.sh
 #Add our own appdata file. 
@@ -117,6 +119,8 @@ BuildRequires:  pkgconfig(wayland-cursor)
 BuildRequires:  pkgconfig(wayland-scanner)
 BuildRequires:  pkgconfig(wayland-server)
 %endif
+# ungoogled-chromium dependencies
+BuildRequires: python3
 # remove_bundled_libraries.py --do-remove
 BuildRequires: python2-rpm-macros
 BuildRequires: python2-beautifulsoup4
@@ -220,7 +224,14 @@ Patch85: chromium-quiche-gcc9.patch
 chromium-vaapi is an open-source web browser, powered by WebKit (Blink)
 ############################################PREP###########################################################
 %prep
-%autosetup -n chromium-%{version} -N
+%setup -q -T -n ungoogled-chromium-%{ungoogled_chromium_revision} -b 300
+%setup -q -n chromium-%{version}
+
+# ungoogled-chromium: binary pruning
+%global ungoogled_chromium_root %{_builddir}/ungoogled-chromium-%{ungoogled_chromium_revision}
+python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
+  %{ungoogled_chromium_root}/pruning.list
+
 ## Apply patches here ##
 %patch1 -p1 -b .vaapi
 %patch2 -p1 -b .widevine
@@ -514,6 +525,20 @@ ln -s %{_bindir}/node third_party/node/linux/node-linux-x64/bin/node
 # Hard code extra version
 FILE=chrome/common/channel_info_posix.cc
 sed -i.orig -e 's/getenv("CHROME_VERSION_EXTRA")/"%{name}"/' $FILE
+
+# ungoogled-chromium: patches
+sed -i '/extra\/inox-patchset\/chromium-widevine.patch/d' \
+  %{ungoogled_chromium_root}/patches/series
+python3 -B %{ungoogled_chromium_root}/utils/patches.py apply . \
+  %{ungoogled_chromium_root}/patches
+
+# ungoogled-chromium: domain substitution
+rm -f %{_builddir}/dsc.tar.gz
+python3 -B %{ungoogled_chromium_root}/utils/domain_substitution.py apply . \
+  -r %{ungoogled_chromium_root}/domain_regex.list \
+  -f %{ungoogled_chromium_root}/domain_substitution.list \
+  -c %{_builddir}/dsc.tar.gz
+
 #####################################BUILD#############################################
 %build
 #export compilar variables
@@ -563,6 +588,21 @@ gn_args=(
     'google_api_key="%{api_key}"'
     'google_default_client_id="%{default_client_id}"'
     'google_default_client_secret="%{default_client_secret}"'
+
+    closure_compile=false
+    enable_hevc_demuxing=true
+    enable_mdns=false
+    enable_mse_mpeg2ts_stream_parser=true
+    enable_nacl_nonsfi=false
+    enable_one_click_signin=false
+    enable_reading_list=false
+    enable_remoting=false
+    enable_reporting=false
+    enable_service_discovery=false
+    exclude_unwind_tables=true
+    safe_browsing_mode=0
+    use_official_google_api_keys=false
+    use_unofficial_version_number=false
 )
 
 #compiler settings
@@ -616,7 +656,6 @@ ninja  %{_smp_mflags} -C %{target}   chrome chrome_sandbox chromedriver
 %install
 mkdir -p %{buildroot}%{_bindir}
 mkdir -p %{buildroot}%{chromiumdir}/locales
-mkdir -p %{buildroot}%{chromiumdir}/MEIPreload
 mkdir -p %{buildroot}%{_mandir}/man1
 mkdir -p %{buildroot}%{_metainfodir}
 mkdir -p %{buildroot}%{_datadir}/applications
@@ -644,7 +683,6 @@ install -m 644 %{target}/v8_context_snapshot.bin %{buildroot}%{chromiumdir}/
 install -m 644 %{target}/*.pak %{buildroot}%{chromiumdir}/
 install -m 644 %{target}/locales/*.pak %{buildroot}%{chromiumdir}/locales/
 install -m 644 %{target}/xdg*  %{buildroot}%{chromiumdir}/
-install -m 644 %{target}/MEIPreload/* %{buildroot}%{chromiumdir}/MEIPreload/
 for i in 16 32; do
     mkdir -p %{buildroot}%{_datadir}/icons/hicolor/${i}x${i}/apps
     install -m 644 chrome/app/theme/default_100_percent/chromium/product_logo_$i.png \
@@ -690,9 +728,6 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/*.pak
 %{chromiumdir}/xdg-mime
 %{chromiumdir}/xdg-settings
-%dir %{chromiumdir}/MEIPreload
-%{chromiumdir}/MEIPreload/manifest.json
-%{chromiumdir}/MEIPreload/preloaded_data.pb
 %dir %{chromiumdir}/locales
 %{chromiumdir}/locales/*.pak
 #########################################changelogs#################################################
