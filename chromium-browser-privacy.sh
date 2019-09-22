@@ -13,7 +13,7 @@ CHROMIUM_DISTRO_FLAGS=()
 export CHROME_WRAPPER="$(readlink -f "$0")"
 
 HERE="`dirname "$CHROME_WRAPPER"`"
-export CHROME_DESKTOP="chromium-vaapi.desktop"
+export CHROME_DESKTOP="chromium-browser-privacy.desktop"
 # We include some xdg utilities next to the binary, and we want to prefer them
 # over the system versions when we know the system versions are very old. We
 # detect whether the system xdg utilities are sufficiently new to be likely to
@@ -58,6 +58,9 @@ CHROMIUM_DISTRO_FLAGS+=" --enable-plugins \
                          --enable-user-scripts \
                          --enable-features=WebRTCPipeWireCapturer \
                          --enable-printing \
-                         --enable-sync"
+                         --disable-sync \
+                         --disable-background-networking \
+                         --force-local-ntp \
+                         --disallow-signin"
 
 exec -a "$0" "@@CHROMIUMDIR@@/$(basename "$0" | sed 's/\.sh$//')" $CHROMIUM_DISTRO_FLAGS "$@"

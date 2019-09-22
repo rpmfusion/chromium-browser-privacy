@@ -1,0 +1,14 @@
+Change default user data dir to ~/.config/ungoogled-chromium.
+https://github.com/Eloston/ungoogled-chromium/issues/568#issuecomment-433724920
+
+--- a/chrome/common/chrome_paths_linux.cc
++++ b/chrome/common/chrome_paths_linux.cc
+@@ -90,7 +90,7 @@ bool GetDefaultUserDataDirectory(base::F
+ #if defined(GOOGLE_CHROME_BUILD)
+   *result = config_dir.Append("google-chrome" + GetChannelSuffixForDataDir());
+ #else
+-  *result = config_dir.Append("chromium");
++  *result = config_dir.Append("ungoogled-chromium");
+ #endif
+   return true;
+ }

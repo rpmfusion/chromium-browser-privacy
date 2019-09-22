@@ -54,12 +54,12 @@
 # Enable building with ozone support
 %global ozone 0
 ##############################Package Definitions######################################
-Name:       chromium-vaapi
+Name:       chromium-browser-privacy
 Version:    76.0.3809.132
 Release:    2%{?dist}
-Summary:    A Chromium web browser with video decoding acceleration
+Summary:    Chromium, sans integration with Google
 License:    BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
-URL:        https://www.chromium.org/Home
+URL:        https://github.com/Eloston/ungoogled-chromium
 %if %{freeworld}
 Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/chromium-%{version}.tar.xz
 %else
@@ -182,6 +182,8 @@ Recommends:    libva-utils
 # This build should be only available to amd64
 ExclusiveArch: x86_64
 # Define Patches here ##
+# Use ~/.config/ungoogled-chromium instead of ~/.config/chromium
+Patch300:  chromium-default-user-data-dir.patch
 # Enable video acceleration on chromium for Linux
 Patch1:    enable-vaapi.patch
 # Enable support for widevine
@@ -221,7 +223,15 @@ Patch85: chromium-quiche-gcc9.patch
 
 
 %description
-chromium-vaapi is an open-source web browser, powered by WebKit (Blink)
+chromium-browser-privacy is an ungoogled-chromium distribution.
+
+ungoogled-chromium is Chromium, sans integration with Google. It also features
+some tweaks to enhance privacy, control, and transparency (almost all of which
+require manual activation or enabling).
+
+ungoogled-chromium retains the default Chromium experience as closely as
+possible. Unlike other Chromium forks that have their own visions of a web
+browser, ungoogled-chromium is essentially a drop-in replacement for Chromium.
 ############################################PREP###########################################################
 %prep
 %setup -q -T -n ungoogled-chromium-%{ungoogled_chromium_revision} -b 300
@@ -233,6 +243,7 @@ python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
   %{ungoogled_chromium_root}/pruning.list
 
 ## Apply patches here ##
+%patch300 -p1 -b .udd
 %patch1 -p1 -b .vaapi
 %patch2 -p1 -b .widevine
 %patch3 -p1 -b .fixvaapi
