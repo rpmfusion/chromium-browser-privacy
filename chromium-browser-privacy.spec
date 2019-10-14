@@ -61,7 +61,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:       chromium-browser-privacy
-Version:    77.0.3865.90
+Version:    77.0.3865.120
 Release:    1%{?dist}
 Summary:    Chromium, sans integration with Google
 License:    BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -83,7 +83,7 @@ Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/c
 # ./chromium-latest.py --stable --ffmpegclean --ffmpegarm --deleteunrar
 Source0:   chromium-%{version}-clean.tar.xz
 %endif
-%global ungoogled_chromium_revision 77.0.3865.90-1
+%global ungoogled_chromium_revision 99b98c530ff30c85434a5becc550bc1cfe255b63
 Source300: https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 # The following two source files are copied and modified from the chromium source
 Source10:  %{name}.sh
@@ -589,7 +589,6 @@ gn_args=(
     fatal_linker_warnings=false
     treat_warnings_as_errors=false
     linux_use_bundled_binutils=false
-    blink_symbol_level = 0
     fieldtrial_testing_like_official_build=true
     'custom_toolchain="//build/toolchain/linux/unbundle:default"'
     'host_toolchain="//build/toolchain/linux/unbundle:default"'
@@ -747,6 +746,10 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libvulkan.so
 #########################################changelogs#################################################
 %changelog
+* Mon Oct 14 2019 qvint <dotqvint@gmail.com> - 77.0.3865.120-1
+- Update Chromium to 77.0.3865.120
+- Update ungoogled-chromium to 99b98c5
+
 * Wed Sep 25 2019 qvint <dotqvint@gmail.com> - 77.0.3865.90-1
 - Update Chromium to 77.0.3865.90
 - Update ungoogled-chromium to 77.0.3865.90-1
