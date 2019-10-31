@@ -41,9 +41,9 @@
 %bcond_with system_libicu
 %if 0%{?fedora} >= 30
 # Allow testing whether libvpx can be unbundled
-%bcond_without system_libvpx
+%bcond_with system_libvpx
 # Allow testing whether ffmpeg can be unbundled
-%bcond_without system_ffmpeg
+%bcond_with system_ffmpeg
 #Allow minizip to be unbundled
 #mini-compat is going to be removed from fedora 30!
 %bcond_without system_minizip
@@ -70,7 +70,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:       chromium-browser-privacy
-Version:    77.0.3865.120
+Version:    78.0.3904.70
 Release:    1%{?dist}
 Summary:    Chromium, sans integration with Google
 License:    BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -212,8 +212,8 @@ Patch300:  chromium-default-user-data-dir.patch
 Patch1:    enable-vaapi.patch
 # Enable support for widevine
 Patch2:   widevine.patch
-#Use Normal BAM on Linux
-Patch3:   UseNormalBAM.patch
+# Fix vaapi on Intel
+Patch3:   fixvaapionintel.patch
 #Fix certificare transperancy error introduced by the current stable version of chromium
 Patch5:    cert-trans-google.patch 
 # Bootstrap still uses python command
@@ -227,16 +227,15 @@ Patch54:  brand.patch
 Patch65: chromium-73.0.3683.75-pipewire-cstring-fix.patch
 # Fix header
 Patch68: Add-missing-header-to-fix-webrtc-build.patch
+Patch69: chromium-unbundle-zlib.patch
+Patch70: chromium-base-location.patch
 # GCC patches
-Patch69: chromium-gcc9-r681333.patch
-Patch70: chromium-gcc9-r681321.patch
-Patch71: chromium-unbundle-zlib.patch
-Patch72: chromium-base-location.patch
-Patch73: chromium-gcc9-r684731.patch
-
-# This patch fixes linking when build with system harfbuzz is enabled
-Patch74: link-against-harfbuzz-subset.patch
-
+Patch73: chromium-gcc9-r688676.patch
+Patch74: chromium-gcc9-r694853.patch
+Patch75: chromium-gcc9-r696834.patch
+Patch76: chromium-gcc9-r706467.patch
+Patch77: chromium-v8-gcc9.patch
+Patch78: chromium-gcc9-dns_util-ambiguous-ctor.patch
 
 %description
 %{name} is an ungoogled-chromium distribution.
@@ -265,16 +264,13 @@ python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
 %if !%{freeworld}
 %patch54 -p1 -R
 %endif
-%if !%{with system_harfbuzz}
-%patch74 -p1 -R
-%endif
 
 
 #Let's change the default shebang of python files.
 find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(python\|env python\)[23]\?=#!%{__python2}=' {} +
 ./build/linux/unbundle/remove_bundled_libraries.py --do-remove \
     base/third_party/cityhash \
-    base/third_party/dmg_fp \
+    base/third_party/double_conversion \
     base/third_party/dynamic_annotations \
     base/third_party/icu \
     base/third_party/libevent \
@@ -333,6 +329,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/catapult/third_party/six \
     third_party/catapult/tracing/third_party/d3 \
     third_party/catapult/tracing/third_party/gl-matrix \
+    third_party/catapult/tracing/third_party/jpeg-js \
     third_party/catapult/tracing/third_party/jszip \
     third_party/catapult/tracing/third_party/mannwhitneyu \
     third_party/catapult/tracing/third_party/oboe \
@@ -346,6 +343,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/crc32c \
     third_party/cros_system_api \
     third_party/dawn \
+    third_party/depot_tools \
     third_party/dav1d \
     third_party/devscripts \
     third_party/dom_distiller_js \
@@ -434,6 +432,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/ply \
 %endif
     third_party/polymer \
+    third_party/private-join-and-compute \
     third_party/protobuf \
     third_party/protobuf/third_party/six \
     third_party/pyjson5 \
@@ -483,6 +482,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/xdg-utils \
     third_party/yasm/run_yasm.py \
     third_party/zlib/google \
+    tools/grit/third_party/six \
 %if !%{with system_minizip}
     third_party/zlib \
 %endif
@@ -565,6 +565,10 @@ export CC=gcc CXX=g++
 
 # GN needs gold to bootstrap
 export LDFLAGS="$LDFLAGS -fuse-ld=gold"
+export CXXFLAGS="$CXXFLAGS -fpermissive"
+%if 0%{?fedora} <= 29
+export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone"
+%endif
 
 gn_args=(
     is_debug=false
@@ -621,18 +625,16 @@ gn_args=(
     use_unofficial_version_number=false
 )
 
-#compiler settings
-# 'clang_base_path = "/usr"'
-# use_lld=false
-  #  clang_use_chrome_plugins=false
+
 gn_args+=(
     is_clang=false
 )
+
 #Jumbo stuff
 gn_args+=(
 %if %{jumbo}
     use_jumbo_build=true
-    jumbo_file_merge_limit=6
+    jumbo_file_merge_limit=7
     concurrent_links=1
 %endif
 )
@@ -752,9 +754,12 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %dir %{chromiumdir}/swiftshader
 %{chromiumdir}/swiftshader/libEGL.so
 %{chromiumdir}/swiftshader/libGLESv2.so
-%{chromiumdir}/swiftshader/libvulkan.so
+%{chromiumdir}/swiftshader/libvk_swiftshader.so
 #########################################changelogs#################################################
 %changelog
+* Thu Oct 31 2019 qvint <dotqvint@gmail.com> - 78.0.3904.70-1
+- Update Chromium to 78.0.3904.70
+
 * Mon Oct 14 2019 qvint <dotqvint@gmail.com> - 77.0.3865.120-1
 - Update Chromium to 77.0.3865.120
 - Update ungoogled-chromium to 99b98c5
