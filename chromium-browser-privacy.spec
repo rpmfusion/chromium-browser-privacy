@@ -92,7 +92,7 @@ Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/c
 # ./chromium-latest.py --stable --ffmpegclean --ffmpegarm --deleteunrar
 Source0:   chromium-%{version}-clean.tar.xz
 %endif
-%global ungoogled_chromium_revision 99b98c530ff30c85434a5becc550bc1cfe255b63
+%global ungoogled_chromium_revision 78.0.3904.70-1
 Source300: https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 # The following two source files are copied and modified from the chromium source
 Source10:  %{name}.sh
@@ -757,8 +757,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libvk_swiftshader.so
 #########################################changelogs#################################################
 %changelog
-* Thu Oct 31 2019 qvint <dotqvint@gmail.com> - 78.0.3904.70-1
+* Fri Nov 01 2019 qvint <dotqvint@gmail.com> - 78.0.3904.70-1
 - Update Chromium to 78.0.3904.70
+- Update ungoogled-chromium to 78.0.3904.70-1
 
 * Mon Oct 14 2019 qvint <dotqvint@gmail.com> - 77.0.3865.120-1
 - Update Chromium to 77.0.3865.120
