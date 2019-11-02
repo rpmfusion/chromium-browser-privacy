@@ -65,7 +65,7 @@
 %global jumbo 1
 #------------------------------------------------------
 #Build debug packages for debugging
-%global debug_pkg 1
+%global debug_pkg 0
 # Enable building with ozone support
 %global ozone 0
 ##############################Package Definitions######################################
@@ -760,6 +760,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 * Sat Nov 02 2019 qvint <dotqvint@gmail.com> - 78.0.3904.87-1
 - Update Chromium to 78.0.3904.87
 - Update ungoogled-chromium to 78.0.3904.87-1
+- Disable debuginfo to match fedora chromium
 
 * Fri Nov 01 2019 qvint <dotqvint@gmail.com> - 78.0.3904.70-1
 - Update Chromium to 78.0.3904.70
