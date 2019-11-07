@@ -70,7 +70,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:       chromium-browser-privacy
-Version:    78.0.3904.87
+Version:    78.0.3904.97
 Release:    1%{?dist}
 Summary:    Chromium, sans integration with Google
 License:    BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -92,7 +92,7 @@ Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/c
 # ./chromium-latest.py --stable --ffmpegclean --ffmpegarm --deleteunrar
 Source0:   chromium-%{version}-clean.tar.xz
 %endif
-%global ungoogled_chromium_revision 78.0.3904.87-1
+%global ungoogled_chromium_revision 6894e445b944da16ed27fe2255e9ef2474fc9af3
 Source300: https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 # The following two source files are copied and modified from the chromium source
 Source10:  %{name}.sh
@@ -757,6 +757,10 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libvk_swiftshader.so
 #########################################changelogs#################################################
 %changelog
+* Thu Nov 07 2019 qvint <dotqvint@gmail.com> - 78.0.3904.97-1
+- Update Chromium to 78.0.3904.97
+- Update ungoogled-chromium to 6894e44
+
 * Sat Nov 02 2019 qvint <dotqvint@gmail.com> - 78.0.3904.87-1
 - Update Chromium to 78.0.3904.87
 - Update ungoogled-chromium to 78.0.3904.87-1
