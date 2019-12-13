@@ -34,16 +34,18 @@
 # Require libxml2 > 2.9.4 for XML_PARSE_NOXXE
 %bcond_without system_libxml2
 
+# Clang toggle
+%global clang 1
 
 # Allow testing whether icu can be unbundled
 # A patch fix building so enabled by default for Fedora 30
 # Need icu version >= 64
 %bcond_with system_libicu
-%if 0%{?fedora} >= 30
+%if 0%{?fedora} >= 31
 # Allow testing whether libvpx can be unbundled
 %bcond_with system_libvpx
 # Allow testing whether ffmpeg can be unbundled
-%bcond_with system_ffmpeg
+%bcond_without system_ffmpeg
 #Allow minizip to be unbundled
 #mini-compat is going to be removed from fedora 30!
 %bcond_without system_minizip
@@ -60,9 +62,6 @@
 
 #Turn on verbose mode
 %global debug_logs 0
-#Allow jumbo builds
-# Enabled by default
-%global jumbo 1
 #------------------------------------------------------
 #Build debug packages for debugging
 %global debug_pkg 0
@@ -70,7 +69,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:       chromium-browser-privacy
-Version:    78.0.3904.108
+Version:    79.0.3945.88
 Release:    1%{?dist}
 Summary:    Chromium, sans integration with Google
 License:    BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -92,7 +91,7 @@ Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/c
 # ./chromium-latest.py --stable --ffmpegclean --ffmpegarm --deleteunrar
 Source0:   chromium-%{version}-clean.tar.xz
 %endif
-%global ungoogled_chromium_revision 0529d60fdaae64165cc59c7ba79c1930bdf264d2
+%global ungoogled_chromium_revision 7ddfefbcea9945595d09ed574437f5f3d328e553
 Source300: https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 # The following two source files are copied and modified from the chromium source
 Source10:  %{name}.sh
@@ -106,7 +105,11 @@ Source15:  LICENSE
 ########################################################################################
 #Compiler settings
 # Make sure we don't encounter any bug
+%if %{clang}
+BuildRequires: clang, llvm, lld
+%else
 BuildRequires: gcc-c++
+%endif
 # Basic tools and libraries needed for building
 BuildRequires: ninja-build, nodejs, bison, gperf, hwdata
 BuildRequires: libgcc, glibc, libatomic
@@ -229,13 +232,17 @@ Patch65: chromium-73.0.3683.75-pipewire-cstring-fix.patch
 Patch68: Add-missing-header-to-fix-webrtc-build.patch
 Patch69: chromium-unbundle-zlib.patch
 Patch70: chromium-base-location.patch
-# GCC patches
-Patch73: chromium-gcc9-r688676.patch
-Patch74: chromium-gcc9-r694853.patch
-Patch75: chromium-gcc9-r696834.patch
-Patch76: chromium-gcc9-r706467.patch
-Patch77: chromium-v8-gcc9.patch
-Patch78: chromium-gcc9-dns_util-ambiguous-ctor.patch
+Patch71: fix-spammy-unique-font-matching-log.patch
+# GCC
+Patch72: include-algorithm-to-use-std-lower_bound.patch
+Patch73: launch_manager.h-uses-std-vector.patch
+# Fix: STolen from Fedora
+Patch74: chromium-79.0.3945.56-glibc-clock-nanosleep.patch
+# ICU  ver. 65 support on Rawhide
+Patch75: icu65.patch
+#Fix building with system harfbuzz
+Patch76:    chromium-fix-use_system_harfbuzz-ng.patch
+
 
 %description
 %{name} is an ungoogled-chromium distribution.
@@ -263,6 +270,11 @@ python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
 %endif
 %if !%{freeworld}
 %patch54 -p1 -R
+%endif
+%if 0%{?fedora} <= 31
+# Only on Rawhide
+%patch74 -p1 -R
+%patch75 -p1 -R
 %endif
 
 
@@ -457,6 +469,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/swiftshader \
     third_party/swiftshader/third_party/llvm-7.0 \
     third_party/swiftshader/third_party/llvm-subzero \
+    third_party/swiftshader/third_party/marl \
     third_party/swiftshader/third_party/subzero \
     third_party/swiftshader/third_party/SPIRV-Headers/include/spirv/unified1 \
     third_party/tcmalloc \
@@ -540,10 +553,6 @@ ln -s %{python2_sitelib}/ply third_party/ply
 # Fix the path to nodejs binary
 mkdir -p third_party/node/linux/node-linux-x64/bin
 ln -s %{_bindir}/node third_party/node/linux/node-linux-x64/bin/node
-# Hard code extra version
-FILE=chrome/common/channel_info_posix.cc
-sed -i.orig -e 's/getenv("CHROME_VERSION_EXTRA")/"%{name}"/' $FILE
-
 # ungoogled-chromium: patches
 sed -i '/extra\/inox-patchset\/chromium-widevine.patch/d' \
   %{ungoogled_chromium_root}/patches/series
@@ -560,15 +569,39 @@ python3 -B %{ungoogled_chromium_root}/utils/domain_substitution.py apply . \
 #####################################BUILD#############################################
 %build
 #export compilar variables
+
+%if %{clang}
+
+export AR=llvm-ar NM=llvm-nm AS=llvm-as
+export CC=clang CXX=clang++
+
+# Add required compiler flags here
+export CXXFLAGS="$CXXFLAGS -Wno-unknown-warning-option"
+export CFLAGS="$CFLAGS -Wno-unknown-warning-option"
+
+%else
 export AR=ar NM=nm AS=as
 export CC=gcc CXX=g++
 
-# GN needs gold to bootstrap
-export LDFLAGS="$LDFLAGS -fuse-ld=gold"
+
+# GN needs gold to bootstrap 
+export LDFLAGS="$LDFLAGS -fuse-ld=gold" 
+
 export CXXFLAGS="$CXXFLAGS -fpermissive"
+%if !%{debug_logs}
+# Disable useless warning on non debug log builds
+export CFLAGS="$CFLAGS -w"
+export CXXFLAGS="$CXXFLAGS -w"
+%endif
+%if !%{debug_pkg}
+export CFLAGS="$CFLAGS -g0"
+export CXXFLAGS="$CXXFLAGS -g0"
+%endif
 %if 0%{?fedora} <= 29
 export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone"
 %endif
+#end compiler part
+%endif 
 
 gn_args=(
     is_debug=false
@@ -610,7 +643,6 @@ gn_args=(
     'google_default_client_secret="%{default_client_secret}"'
 
     closure_compile=false
-    enable_hevc_demuxing=true
     enable_mdns=false
     enable_mse_mpeg2ts_stream_parser=true
     enable_nacl_nonsfi=false
@@ -625,18 +657,24 @@ gn_args=(
     use_unofficial_version_number=false
 )
 
-
+# Optimizations
 gn_args+=(
-    is_clang=false
+   enable_vr=false
+%if %{with system_libicu}
+   icu_use_data_file=false
+%endif
 )
 
-#Jumbo stuff
+
 gn_args+=(
-%if %{jumbo}
-    use_jumbo_build=true
-    jumbo_file_merge_limit=7
-    concurrent_links=1
-%endif
+%if %{clang}
+    is_clang=true
+    'clang_base_path="/usr"'
+    clang_use_chrome_plugins=false
+    use_lld=true
+%else 
+    is_clang=false
+%endif 
 )
 
 #Pipewire
@@ -661,6 +699,9 @@ gn_args+=(
 gn_args+=(
 %if %{debug_pkg}
     symbol_level=1
+%else
+    symbol_level=0
+    blink_symbol_level=0
 %endif
 )
 tools/gn/bootstrap/bootstrap.py  --gn-gen-args "${gn_args[*]}"
@@ -754,9 +795,13 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %dir %{chromiumdir}/swiftshader
 %{chromiumdir}/swiftshader/libEGL.so
 %{chromiumdir}/swiftshader/libGLESv2.so
-%{chromiumdir}/swiftshader/libvk_swiftshader.so
 #########################################changelogs#################################################
 %changelog
+* Wed Dec 18 2019 qvint <dotqvint@gmail.com> - 79.0.3945.88-1
+- Update Chromium to 79.0.3945.88
+- Update ungoogled-chromium to 7ddfefb
+- Sync spec and sources with free/chromium-freeworld (e472355)
+
 * Tue Nov 19 2019 qvint <dotqvint@gmail.com> - 78.0.3904.108-1
 - Update Chromium to 78.0.3904.108
 - Update ungoogled-chromium to 0529d60
