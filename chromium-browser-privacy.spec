@@ -70,7 +70,7 @@
 ##############################Package Definitions######################################
 Name:       chromium-browser-privacy
 Version:    79.0.3945.130
-Release:    1%{?dist}
+Release:    2%{?dist}
 Summary:    Chromium, sans integration with Google
 License:    BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
 URL:        https://github.com/Eloston/ungoogled-chromium
@@ -797,6 +797,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
+* Tue Feb 04 2020 RPM Fusion Release Engineering <leigh123linux@gmail.com> - 79.0.3945.130-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
 * Fri Jan 17 2020 qvint <dotqvint@gmail.com> - 79.0.3945.130-1
 - Update Chromium to 79.0.3945.130
 - Update ungoogled-chromium to 79.0.3945.130-1
