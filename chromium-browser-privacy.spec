@@ -316,7 +316,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/angle/src/third_party/compiler \
     third_party/angle/src/third_party/libXNVCtrl \
     third_party/angle/src/third_party/trace_event \
-		third_party/libgifcodec \
+    third_party/libgifcodec \
     third_party/glslang \
     third_party/angle/third_party/spirv-headers \
     third_party/angle/third_party/spirv-tools \
@@ -361,8 +361,8 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/depot_tools \
     third_party/dav1d \
     third_party/devscripts \
-		third_party/devtools-frontend \
-		third_party/devtools-frontend/src/third_party \
+    third_party/devtools-frontend \
+    third_party/devtools-frontend/src/third_party \
     third_party/dom_distiller_js \
     third_party/emoji-segmenter \
 %if !%{with system_ffmpeg}
