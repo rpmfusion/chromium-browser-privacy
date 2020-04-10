@@ -14,16 +14,16 @@
 %global __requires_exclude %{chromiumdir}/.*\\.so
 %global __provides_exclude_from %{chromiumdir}/.*\\.so
 #######################################CONFIGS###########################################
-# Fedora's Python 2 stack is being removed, we use the bundled Python libraries	
-# This can be revisited once we upgrade to Python 3	
+# Fedora's Python 2 stack is being removed, we use the bundled Python libraries
+# This can be revisited once we upgrade to Python 3
 %global bundlepylibs 1
 %if 0%{bundlepylibs}
 %bcond_with system_ply
 %else
 %bcond_without system_ply
 %endif
-# This package depends on automagic byte compilation            
-# https://fedoraproject.org/wiki/Changes/No_more_automagic_Python_bytecompilation_phase_2            
+# This package depends on automagic byte compilation
+# https://fedoraproject.org/wiki/Changes/No_more_automagic_Python_bytecompilation_phase_2
 %global _python_bytecompile_extra 1
 #Require harfbuzz >= 2.4.0 for hb_subset_input_set_retain_gids
 %if 0%{?fedora} >= 31
@@ -57,7 +57,7 @@
 %bcond_without system_minizip
 %endif
 
-# Need re2 ver. 2016.07.21 for re2::LazyRE2 
+# Need re2 ver. 2016.07.21 for re2::LazyRE2
 %bcond_with system_re2
 
 #Turn on verbose mode
@@ -68,14 +68,14 @@
 # Enable building with ozone support
 %global ozone 0
 ##############################Package Definitions######################################
-Name:       chromium-browser-privacy
-Version:    80.0.3987.122
-Release:    1%{?dist}
-Summary:    Chromium, sans integration with Google
-License:    BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
-URL:        https://github.com/Eloston/ungoogled-chromium
+Name:           chromium-browser-privacy
+Version:        81.0.4044.92
+Release:        1%{?dist}
+Summary:        Chromium, sans integration with Google
+License:        BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
+URL:            https://github.com/Eloston/ungoogled-chromium
 %if %{freeworld}
-Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/chromium-%{version}.tar.xz
+Source0:        https://commondatastorage.googleapis.com/chromium-browser-official/chromium-%{version}.tar.xz
 %else
 # Unfortunately, Fedora & Copr forbids uploading sources with patent-encumbered
 # ffmpeg code even if they are never compiled and linked to target binaries,
@@ -89,16 +89,16 @@ Source0:    https://commondatastorage.googleapis.com/chromium-browser-official/c
 # to 1 to use the upstreanm packaged source.
 # The repackaged source tarball used here is produced by:
 # ./chromium-latest.py --stable --ffmpegclean --ffmpegarm --deleteunrar
-Source0:   chromium-%{version}-clean.tar.xz
+Source0:        chromium-%{version}-clean.tar.xz
 %endif
 %global ungoogled_chromium_revision 80.0.3987.122-1
-Source300: https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
+Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 # The following two source files are copied and modified from the chromium source
-Source10:  %{name}.sh
-#Add our own appdata file. 
-Source11:  %{name}.appdata.xml
+Source10:       %{name}.sh
+#Add our own appdata file.
+Source11:       %{name}.appdata.xml
 #Personal stuff
-Source15:  LICENSE
+Source15:       LICENSE
 ######################## Installation Folder #################################################
 #Our installation folder
 %global chromiumdir %{_libdir}/%{name}
@@ -106,153 +106,135 @@ Source15:  LICENSE
 #Compiler settings
 # Make sure we don't encounter any bug
 %if %{clang}
-BuildRequires: clang, llvm, lld
+BuildRequires:  clang, llvm, lld
 %else
-BuildRequires: gcc-c++
+BuildRequires:  gcc-c++
 %endif
 # Basic tools and libraries needed for building
-BuildRequires: ninja-build, nodejs, bison, gperf, hwdata
-BuildRequires: libgcc, glibc, libatomic
-BuildRequires: libcap-devel, cups-devel, alsa-lib-devel
-BuildRequires: mesa-libGL-devel, mesa-libEGL-devel
+BuildRequires:  ninja-build, nodejs, bison, gperf, hwdata
+BuildRequires:  libgcc, glibc, libatomic
+BuildRequires:  libcap-devel, cups-devel, alsa-lib-devel
+BuildRequires:  mesa-libGL-devel, mesa-libEGL-devel
 %if %{with system_minizip}
-BuildRequires:	minizip-compat-devel
+BuildRequires:  minizip-compat-devel
 %endif
 # Pipewire need this.
 %if 0%{?fedora} >= 29
-BuildRequires:	pkgconfig(libpipewire-0.2)
+BuildRequires:  pkgconfig(libpipewire-0.2)
 %endif
-BuildRequires: pkgconfig(gtk+-2.0), pkgconfig(gtk+-3.0)
-BuildRequires: pkgconfig(libexif), pkgconfig(nss)
-BuildRequires: pkgconfig(xtst), pkgconfig(xscrnsaver)
-BuildRequires: pkgconfig(dbus-1), pkgconfig(libudev)
-BuildRequires: pkgconfig(gnome-keyring-1)
-BuildRequires: pkgconfig(libffi)
+BuildRequires:  pkgconfig(gtk+-2.0), pkgconfig(gtk+-3.0)
+BuildRequires:  pkgconfig(libexif), pkgconfig(nss)
+BuildRequires:  pkgconfig(xtst), pkgconfig(xscrnsaver)
+BuildRequires:  pkgconfig(dbus-1), pkgconfig(libudev)
+BuildRequires:  pkgconfig(gnome-keyring-1)
+BuildRequires:  pkgconfig(libffi)
 #for vaapi
-BuildRequires: pkgconfig(libva)
-%if %{ozone}
+BuildRequires:  pkgconfig(libva)
 BuildRequires:  pkgconfig(gbm)
+%if %{ozone}
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-cursor)
 BuildRequires:  pkgconfig(wayland-scanner)
 BuildRequires:  pkgconfig(wayland-server)
 %endif
 # ungoogled-chromium dependencies
-BuildRequires: python3
+BuildRequires:  python3
 
 #Python stuffs
 %if 0%{?bundlepylibs}
-	
+
 # Using bundled bits, do nothing.
 #This is needed for remove_bundled_libraries.py
-BuildRequires: /usr/bin/python2
-	
+BuildRequires:  /usr/bin/python2
+
 %else
-BuildRequires: python2-rpm-macros
-BuildRequires: python2-beautifulsoup4
-BuildRequires: python2-lxml
-BuildRequires: python2-html5lib
-BuildRequires: python2-markupsafe
-Buildrequires: python2-six
+BuildRequires:  python2-rpm-macros
+BuildRequires:  python2-beautifulsoup4
+BuildRequires:  python2-lxml
+BuildRequires:  python2-html5lib
+BuildRequires:  python2-markupsafe
+Buildrequires:  python2-six
 %if %{with system_ply}
-BuildRequires: python2-ply
+BuildRequires:  python2-ply
 %endif
 %endif
 %if %{with system_re2}
-BuildRequires: re2-devel
+BuildRequires:  re2-devel
 %endif
 # replace_gn_files.py --system-libraries
-BuildRequires: flac-devel
-BuildRequires: freetype-devel
+BuildRequires:  flac-devel
+BuildRequires:  freetype-devel
 %if %{with system_harfbuzz}
-BuildRequires: harfbuzz-devel
+BuildRequires:  harfbuzz-devel
 %endif
 %if %{with system_libicu}
-BuildRequires: libicu-devel
+BuildRequires:  libicu-devel
 %endif
-BuildRequires: libdrm-devel
-BuildRequires: libjpeg-turbo-devel
-BuildRequires: libpng-devel
+BuildRequires:  libdrm-devel
+BuildRequires:  libjpeg-turbo-devel
+BuildRequires:  libpng-devel
 # Chromium requires libvpx 1.5.0 and some non-default options
 %if %{with system_libvpx}
-BuildRequires: libvpx-devel
+BuildRequires:  libvpx-devel
 %endif
 %if %{with system_ffmpeg}
-BuildRequires: ffmpeg-devel
+BuildRequires:  ffmpeg-devel
 %endif
-BuildRequires: libwebp-devel
+BuildRequires:  libwebp-devel
 %if %{with system_libxml2}
-BuildRequires: pkgconfig(libxml-2.0)
+BuildRequires:  pkgconfig(libxml-2.0)
 %endif
-BuildRequires: pkgconfig(libxslt)
-BuildRequires: opus-devel
-BuildRequires: snappy-devel
-BuildRequires: yasm
-BuildRequires: pciutils-devel
-BuildRequires: speech-dispatcher-devel
-BuildRequires: pulseaudio-libs-devel
+BuildRequires:  pkgconfig(libxslt)
+BuildRequires:  opus-devel
+BuildRequires:  snappy-devel
+BuildRequires:  yasm
+BuildRequires:  expat-devel
+BuildRequires:  pciutils-devel
+BuildRequires:  speech-dispatcher-devel
+BuildRequires:  pulseaudio-libs-devel
 # install desktop files
-BuildRequires: desktop-file-utils
+BuildRequires:  desktop-file-utils
 # install AppData files
-BuildRequires: libappstream-glib
+BuildRequires:  libappstream-glib
 # Mojojojo need this >:(
-BuildRequires: java-1.8.0-openjdk
+BuildRequires:  java-1.8.0-openjdk
 # Libstdc++ static needed for linker
 BuildRequires:  libstdc++-static
 #Runtime Requirements
 Requires:       hicolor-icon-theme
 #Some recommendations
-Recommends:    libva-utils
+Recommends:     libva-utils
 %if !%{debug_pkg}
 %global debug_package %{nil}
 %endif
 # This build should be only available to amd64
-ExclusiveArch: x86_64
-# Define Patches here ##
-# Enable video acceleration on chromium for Linux
-Patch1:    enable-vaapi.patch
-# Enable support for widevine
-Patch2:   widevine.patch
-# Fix vaapi on Intel
-Patch3:   fixvaapionintel.patch
-#Fix certificare transperancy error introduced by the current stable version of chromium
-Patch5:    cert-trans-google.patch 
-# Bootstrap still uses python command
-Patch51:  py2-bootstrap.patch
-# Fix building with system icu
-Patch52:  chromium-system-icu.patch
-# Let's brand chromium!
-Patch54:  brand.patch
-# Fix header
-Patch68: Add-missing-header-to-fix-webrtc-build.patch
-Patch69: chromium-unbundle-zlib.patch
-Patch70: chromium-base-location.patch
+ExclusiveArch:  x86_64
 
-# ungoogled-chromium tweaks:
-Patch300: chromium-default-user-data-dir.patch
+# Google patches (short-term fixes and backports):
+Patch150:       chromium-81-vaapi-r737459.patch
+Patch151:       chromium-81-vaapi-r738595.patch
+Patch152:       chromium-81-gcc-r742632.patch
+Patch153:       chromium-81-gcc-r742834.patch
+Patch154:       chromium-81-gcc-r743910.patch
 
-# Gentoo:
-Patch400: chromium-80-include.patch
-Patch401: chromium-80-gcc-incomplete-type.patch
-Patch402: chromium-80-gcc-quiche.patch
-Patch403: chromium-80-gcc-permissive.patch
-Patch404: chromium-80-gcc-blink.patch
-Patch405: chromium-80-gcc-abstract.patch
-%if %{with system_libxml2}
-Patch406: chromium-80-unbundle-libxml.patch
-%endif
-
-# Fedora:
-Patch500: chromium-80.0.3987.87-missing-string-header.patch
-Patch501: chromium-80.0.3987.106-missing-cstddef-header.patch
-Patch502: chromium-80.0.3987.87-missing-cstdint-header.patch
-Patch503: chromium-77.0.3865.75-gcc-include-memory.patch
-Patch504: chromium-80.0.3987.106-missing-cstring-header.patch
+# Gentoo patches (short-term fixes):
 %if 0%{?fedora} >= 32
-Patch505: chromium-79.0.3945.130-gcc10-use-c++17-to-work-around-ugly-angle-code.patch
-Patch506: chromium-80.0.3987.87-fix-for-c++17.patch
+Patch250:       chromium-81-gcc-10.patch
 %endif
 
+# Fedora patches:
+Patch300:       chromium-71.0.3578.98-py2-bootstrap.patch
+
+# RPM Fusion patches [free/chromium-freeworld]:
+Patch400:       chromium-enable-vaapi.patch
+Patch401:       chromium-fix-vaapi-on-intel.patch
+Patch402:       chromium-enable-widevine.patch
+%if %{freeworld}
+Patch403:       chromium-rpm-fusion-brand.patch
+%endif
+
+# RPM Fusion patches [free/chromium-browser-privacy]:
+Patch500:       chromium-default-user-data-dir.patch
 
 %description
 %{name} is an ungoogled-chromium distribution.
@@ -275,13 +257,6 @@ python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
   %{ungoogled_chromium_root}/pruning.list
 
 %autopatch -p1
-%if !%{with system_libicu}
-%patch52 -p1  -R
-%endif
-%if !%{freeworld}
-%patch54 -p1 -R
-%endif
-
 
 #Let's change the default shebang of python files.
 find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(python\|env python\)[23]\?=#!%{__python2}=' {} +
@@ -316,6 +291,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/angle/src/third_party/compiler \
     third_party/angle/src/third_party/libXNVCtrl \
     third_party/angle/src/third_party/trace_event \
+    third_party/angle/src/third_party/volk \
     third_party/libgifcodec \
     third_party/glslang \
     third_party/angle/third_party/spirv-headers \
@@ -336,10 +312,10 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/catapult \
     third_party/catapult/common/py_vulcanize/third_party/rcssmin \
     third_party/catapult/common/py_vulcanize/third_party/rjsmin \
-    %if 0%{?bundlepylibs}
+%if 0%{?bundlepylibs}
     third_party/catapult/third_party/beautifulsoup4 \
     third_party/catapult/third_party/html5lib-python \
-    %endif
+%endif
     third_party/catapult/third_party/polymer \
     third_party/catapult/third_party/six \
     third_party/catapult/tracing/third_party/d3 \
@@ -362,6 +338,8 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/dav1d \
     third_party/devscripts \
     third_party/devtools-frontend \
+    third_party/devtools-frontend/src/front_end/third_party/fabricjs \
+    third_party/devtools-frontend/src/front_end/third_party/wasmparser \
     third_party/devtools-frontend/src/third_party \
     third_party/dom_distiller_js \
     third_party/emoji-segmenter \
@@ -412,8 +390,8 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/libyuv \
     third_party/lss \
     third_party/lzma_sdk \
-%if 0%{?bundlepylibs}	
-	third_party/markupsafe \
+%if 0%{?bundlepylibs}
+    third_party/markupsafe \
 %endif
     third_party/mesa \
     third_party/metrics_proto \
@@ -458,7 +436,6 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
 %endif
     third_party/rnnoise \
     third_party/s2cellid \
-    third_party/sfntly \
     third_party/skia \
     third_party/skia/include/third_party/skcms \
     third_party/skia/include/third_party/vulkan \
@@ -502,7 +479,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
 %if !%{with system_minizip}
     third_party/zlib \
 %endif
-    tools/gn/base/third_party/icu \
+    tools/gn/src/base/third_party/icu \
     url/third_party/mozilla \
     v8/src/third_party/siphash \
     v8/src/third_party/valgrind \
@@ -587,8 +564,8 @@ export AR=ar NM=nm AS=as
 export CC=gcc CXX=g++
 
 
-# GN needs gold to bootstrap 
-export LDFLAGS="$LDFLAGS -fuse-ld=gold" 
+# GN needs gold to bootstrap
+export LDFLAGS="$LDFLAGS -fuse-ld=gold"
 
 export CXXFLAGS="$CXXFLAGS -fpermissive"
 %if !%{debug_logs}
@@ -604,7 +581,7 @@ export CXXFLAGS="$CXXFLAGS -g0"
 export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone"
 %endif
 #end compiler part
-%endif 
+%endif
 
 gn_args=(
     is_debug=false
@@ -675,9 +652,9 @@ gn_args+=(
     'clang_base_path="/usr"'
     clang_use_chrome_plugins=false
     use_lld=true
-%else 
+%else
     is_clang=false
-%endif 
+%endif
 )
 
 #Pipewire
@@ -692,7 +669,7 @@ gn_args+=(
 gn_args+=(
 %if %{ozone}
     use_ozone=true
-    use_system_minigbm=true 
+    use_system_minigbm=true
     use_xkbcommon=true
 %endif
 )
@@ -766,7 +743,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 ######################################files################################################
 %files
 %license LICENSE
-%doc AUTHORS 
+%doc AUTHORS
 %{_bindir}/%{name}
 %{_metainfodir}/%{name}.appdata.xml
 %{_datadir}/applications/%{name}.desktop
@@ -798,6 +775,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
+* Fri Apr 10 2020 qvint <dotqvint@gmail.com> - 81.0.4044.92-1
+- Update Chromium to 81.0.4044.92
+
 * Thu Feb 27 2020 qvint <dotqvint@gmail.com> - 80.0.3987.122-1
 - Update Chromium to 80.0.3987.122
 - Update ungoogled-chromium to 80.0.3987.122-1
