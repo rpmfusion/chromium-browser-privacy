@@ -69,7 +69,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:           chromium-browser-privacy
-Version:        81.0.4044.92
+Version:        81.0.4044.129
 Release:        1%{?dist}
 Summary:        Chromium, sans integration with Google
 License:        BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -775,6 +775,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
+* Thu Apr 30 2020 qvint <dotqvint@gmail.com> - 81.0.4044.129-1
+- Update Chromium to 81.0.4044.129
+
 * Fri Apr 10 2020 qvint <dotqvint@gmail.com> - 81.0.4044.92-1
 - Update Chromium to 81.0.4044.92
 - Update ungoogled-chromium to 209e24b
