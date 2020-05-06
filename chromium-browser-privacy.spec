@@ -91,7 +91,7 @@ Source0:        https://commondatastorage.googleapis.com/chromium-browser-offici
 # ./chromium-latest.py --stable --ffmpegclean --ffmpegarm --deleteunrar
 Source0:        chromium-%{version}-clean.tar.xz
 %endif
-%global ungoogled_chromium_revision 81.0.4044.129-1
+%global ungoogled_chromium_revision 38e86b553295c5c6c9a08a72747cc6b9144eb19a
 Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 # The following two source files are copied and modified from the chromium source
 Source10:       %{name}.sh
@@ -778,6 +778,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %changelog
 * Wed May 06 2020 qvint <dotqvint@gmail.com> - 81.0.4044.138-1
 - Update Chromium to 81.0.4044.138
+- Update ungoogled-chromium to 38e86b5
 
 * Thu Apr 30 2020 qvint <dotqvint@gmail.com> - 81.0.4044.129-1
 - Update Chromium to 81.0.4044.129
