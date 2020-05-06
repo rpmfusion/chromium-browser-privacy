@@ -69,7 +69,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:           chromium-browser-privacy
-Version:        81.0.4044.129
+Version:        81.0.4044.138
 Release:        1%{?dist}
 Summary:        Chromium, sans integration with Google
 License:        BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -224,6 +224,7 @@ Patch250:       chromium-81-gcc-10.patch
 
 # Fedora patches:
 Patch300:       chromium-71.0.3578.98-py2-bootstrap.patch
+Patch301:       chromium-58.0.3029.96-revert-b794998819088f76b4cf44c8db6940240c563cf4.patch
 
 # RPM Fusion patches [free/chromium-freeworld]:
 Patch400:       chromium-enable-vaapi.patch
@@ -775,6 +776,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
+* Wed May 06 2020 qvint <dotqvint@gmail.com> - 81.0.4044.138-1
+- Update Chromium to 81.0.4044.138
+
 * Thu Apr 30 2020 qvint <dotqvint@gmail.com> - 81.0.4044.129-1
 - Update Chromium to 81.0.4044.129
 - Update ungoogled-chromium to 81.0.4044.129-1
