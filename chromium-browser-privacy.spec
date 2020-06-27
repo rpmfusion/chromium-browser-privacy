@@ -243,6 +243,9 @@ Patch403:       chromium-rpm-fusion-brand.patch
 # RPM Fusion patches [free/chromium-browser-privacy]:
 Patch500:       chromium-default-user-data-dir.patch
 
+# Additional patches:
+Patch600:       chromium-widevine-locations.patch
+
 %description
 %{name} is an ungoogled-chromium distribution.
 
@@ -790,6 +793,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 * Sat Jun 27 2020 qvint <dotqvint@gmail.com> - 83.0.4103.116-1
 - Update Chromium to 83.0.4103.116
 - Update ungoogled-chromium to 83.0.4103.116-1
+- Try alternative locations for the Widevine CDM library
 
 * Wed May 06 2020 qvint <dotqvint@gmail.com> - 81.0.4044.138-1
 - Update Chromium to 81.0.4044.138
