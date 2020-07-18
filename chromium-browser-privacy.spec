@@ -99,7 +99,7 @@ Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_re
 Source2:        https://xcb.freedesktop.org/dist/xcb-proto-%{xcb_proto_version}.tar.bz2
 
 # ungoogled-chromium.
-%global ungoogled_chromium_revision 83.0.4103.116-1
+%global ungoogled_chromium_revision 84.0.4147.89-1
 Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 
 # The following two source files are copied and modified from the chromium source
@@ -562,8 +562,6 @@ mkdir -p third_party/node/linux/node-linux-x64/bin
 ln -s %{_bindir}/node third_party/node/linux/node-linux-x64/bin/node
 
 # ungoogled-chromium: patches
-sed -i '/extra\/inox-patchset\/chromium-widevine.patch/d' \
-  %{ungoogled_chromium_root}/patches/series
 python3 -B %{ungoogled_chromium_root}/utils/patches.py apply . \
   %{ungoogled_chromium_root}/patches
 
@@ -811,6 +809,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %changelog
 * Sat Jul 18 2020 qvint <dotqvint@gmail.com> - 84.0.4147.89-1
 - Update Chromium to 84.0.4147.89
+- Update ungoogled-chromium to 84.0.4147.89-1
 
 * Sat Jun 27 2020 qvint <dotqvint@gmail.com> - 83.0.4103.116-1
 - Update Chromium to 83.0.4103.116
