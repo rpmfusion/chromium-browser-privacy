@@ -99,7 +99,7 @@ Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_re
 Source2:        https://xcb.freedesktop.org/dist/xcb-proto-%{xcb_proto_version}.tar.bz2
 
 # ungoogled-chromium.
-%global ungoogled_chromium_revision 84.0.4147.89-1
+%global ungoogled_chromium_revision 84.0.4147.125-1
 Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 
 # The following two source files are copied and modified from the chromium source
@@ -808,6 +808,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %changelog
 * Thu Aug 13 2020 qvint <dotqvint@gmail.com> - 84.0.4147.125-1
 - Update Chromium to 84.0.4147.125
+- Update ungoogled-chromium to 84.0.4147.125-1
 
 * Sat Jul 18 2020 qvint <dotqvint@gmail.com> - 84.0.4147.89-1
 - Update Chromium to 84.0.4147.89
