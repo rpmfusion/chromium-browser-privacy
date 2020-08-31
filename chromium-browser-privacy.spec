@@ -1,6 +1,8 @@
 #Global Libraries
 #Do not turn it on in Fedora copr!
 %global freeworld 1
+%global menu_name Chromium (Freeworld)
+%global xdg_subdir chromium
 #This can be any folder on out
 %global target out/Release
 ### Google API keys (see http://www.chromium.org/developers/how-tos/api-keys)
@@ -23,11 +25,7 @@
 %bcond_without system_ply
 %endif
 #Require harfbuzz >= 2.4.0 for hb_subset_input_set_retain_gids
-%if 0%{?fedora} >= 31
 %bcond_without system_harfbuzz
-%else
-%bcond_with system_harfbuzz
-%endif
 # Require libxml2 > 2.9.4 for XML_PARSE_NOXXE
 %bcond_without system_libxml2
 
@@ -38,7 +36,6 @@
 # A patch fix building so enabled by default for Fedora 30
 # Need icu version >= 64
 %bcond_with system_libicu
-%if 0%{?fedora} >= 31
 # Allow testing whether libvpx can be unbundled
 %bcond_with system_libvpx
 # Allow testing whether ffmpeg can be unbundled
@@ -46,13 +43,6 @@
 #Allow minizip to be unbundled
 #mini-compat is going to be removed from fedora 30!
 %bcond_without system_minizip
-%else
-%bcond_with system_libvpx
-%bcond_with system_ffmpeg
-#Allow minizip to be unbundled
-#mini-compat is going to be removed from fedora 30!
-%bcond_without system_minizip
-%endif
 
 # Need re2 ver. 2016.07.21 for re2::LazyRE2
 %bcond_with system_re2
@@ -66,7 +56,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:           chromium-browser-privacy
-Version:        84.0.4147.125
+Version:        85.0.4183.83
 Release:        1%{?dist}
 Summary:        Chromium, sans integration with Google
 License:        BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -91,12 +81,8 @@ Source0:        chromium-%{version}-clean.tar.xz
 %endif
 
 # Patchset composed by Stephan Hartmann.
-%global patchset_revision chromium-84-patchset-3
+%global patchset_revision chromium-85-patchset-2
 Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_revision}/chromium-patches-%{patchset_revision}.tar.gz
-
-# Bundled xcb-proto. Chromium needs python2 version of this package.
-%global xcb_proto_version 1.13
-Source2:        https://xcb.freedesktop.org/dist/xcb-proto-%{xcb_proto_version}.tar.bz2
 
 # ungoogled-chromium.
 %global ungoogled_chromium_revision 84.0.4147.125-1
@@ -106,6 +92,7 @@ Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogle
 Source10:       %{name}.sh
 #Add our own appdata file.
 Source11:       %{name}.appdata.xml
+Source12:       chromium-symbolic.svg
 #Personal stuff
 Source15:       LICENSE
 ######################## Installation Folder #################################################
@@ -128,9 +115,7 @@ BuildRequires:  mesa-libGL-devel, mesa-libEGL-devel
 BuildRequires:  minizip-compat-devel
 %endif
 # Pipewire need this.
-%if 0%{?fedora} >= 29
 BuildRequires:  pkgconfig(libpipewire-0.2)
-%endif
 BuildRequires:  pkgconfig(gtk+-2.0), pkgconfig(gtk+-3.0)
 BuildRequires:  pkgconfig(libexif), pkgconfig(nss)
 BuildRequires:  pkgconfig(xtst), pkgconfig(xscrnsaver)
@@ -220,7 +205,9 @@ Recommends:     libva-utils
 ExclusiveArch:  x86_64
 
 # Google patches (short-term fixes and backports):
-Patch150:       chromium-84-nss-r771840.patch
+%if 0%{?fedora} >= 33
+Patch150:       chromium-85-ffmpeg-4.3-r796966.patch
+%endif
 
 # Gentoo patches (short-term fixes):
 
@@ -231,8 +218,9 @@ Patch300:       chromium-py2-bootstrap.patch
 Patch400:       chromium-enable-vaapi.patch
 Patch401:       chromium-fix-vaapi-on-intel.patch
 Patch402:       chromium-enable-widevine.patch
+Patch403:       chromium-manpage.patch
 %if %{freeworld}
-Patch403:       chromium-rpm-fusion-brand.patch
+Patch420:       chromium-rpm-fusion-brand.patch
 %endif
 
 # RPM Fusion patches [free/chromium-browser-privacy]:
@@ -254,21 +242,29 @@ browser, ungoogled-chromium is essentially a drop-in replacement for Chromium.
 ############################################PREP###########################################################
 %prep
 %setup -q -T -n chromium-patches-%{patchset_revision} -b 1
-%setup -q -T -n xcb-proto-%{xcb_proto_version} -b 2
 %setup -q -T -n ungoogled-chromium-%{ungoogled_chromium_revision} -b 300
-
-%global patchset_root %{_builddir}/chromium-patches-%{patchset_revision}
-%global xcb_proto_root %{_builddir}/xcb-proto-%{xcb_proto_version}
-%global ungoogled_chromium_root %{_builddir}/ungoogled-chromium-%{ungoogled_chromium_revision}
-
 %setup -q -n chromium-%{version}
 
+%global patchset_root %{_builddir}/chromium-patches-%{patchset_revision}
+%global ungoogled_chromium_root %{_builddir}/ungoogled-chromium-%{ungoogled_chromium_revision}
+
 # Apply patchset composed by Stephan Hartmann.
-rm %{patchset_root}/chromium-84-compiler.patch
-for patch in %{patchset_root}/*.patch; do
-  echo "Applying ${patch}"
-  %{__patch} -p1 <"${patch}"
-done
+%global patchset_apply() %{__scm_apply_patch -p1} <%{patchset_root}/%{1}
+%patchset_apply chromium-blink-gcc-diagnostic-pragma.patch
+%patchset_apply chromium-fix-char_traits.patch
+%patchset_apply chromium-quiche-invalid-offsetof.patch
+%patchset_apply chromium-78-protobuf-RepeatedPtrField-export.patch
+%patchset_apply chromium-79-gcc-protobuf-alignas.patch
+%patchset_apply chromium-80-QuicStreamSendBuffer-deleted-move-constructor.patch
+%patchset_apply chromium-84-blink-disable-clang-format.patch
+%patchset_apply chromium-85-DelayNode-cast.patch
+%patchset_apply chromium-85-FrameWidget-namespace.patch
+%patchset_apply chromium-85-NearbyConnection-abstract.patch
+%patchset_apply chromium-85-NearbyShareEncryptedMetadataKey-include.patch
+%patchset_apply chromium-85-oscillator_node-cast.patch
+%patchset_apply chromium-85-ostream-operator.patch
+%patchset_apply chromium-85-ozone-include.patch
+%patchset_apply chromium-85-sim_hash-include.patch
 
 # ungoogled-chromium: binary pruning.
 python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
@@ -432,6 +428,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/node \
     third_party/node/node_modules/polymer-bundler/lib/third_party/UglifyJS2 \
     third_party/one_euro_filter \
+    third_party/opencv \
     third_party/openh264 \
     third_party/openscreen \
     third_party/openscreen/src/third_party/mozilla \
@@ -476,7 +473,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/sqlite \
     third_party/swiftshader \
     third_party/swiftshader/third_party/astc-encoder \
-    third_party/swiftshader/third_party/llvm-7.0 \
+    third_party/swiftshader/third_party/llvm-10.0 \
     third_party/swiftshader/third_party/llvm-subzero \
     third_party/swiftshader/third_party/marl \
     third_party/swiftshader/third_party/subzero \
@@ -501,6 +498,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/webrtc/rtc_base/third_party/sigslot \
     third_party/widevine \
     third_party/woff2 \
+    third_party/xcbproto \
     third_party/xdg-utils \
     third_party/zlib/google \
     tools/grit/third_party/six \
@@ -601,9 +599,6 @@ export CXXFLAGS="$CXXFLAGS -w"
 export CFLAGS="$CFLAGS -g0"
 export CXXFLAGS="$CXXFLAGS -g0"
 %endif
-%if 0%{?fedora} <= 29
-export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone"
-%endif
 #end compiler part
 %endif
 
@@ -683,10 +678,8 @@ gn_args+=(
 
 #Pipewire
 gn_args+=(
-%if 0%{?fedora} >= 29
      rtc_use_pipewire=true
      rtc_link_pipewire=true
-%endif
 )
 
 # Ozone stuff : Whole work is done completely upstream.
@@ -709,12 +702,6 @@ gn_args+=(
 %endif
 )
 
-# Bundled xcb-proto.
-gn_args+=(
-    'xcbproto_path="%{xcb_proto_root}/src"'
-)
-export PYTHONPATH="${PYTHONPATH}${PYTHONPATH+:}%{xcb_proto_root}"
-
 tools/gn/bootstrap/bootstrap.py  --gn-gen-args "${gn_args[*]}"
 %{target}/gn --script-executable=%{__python2} gen --args="${gn_args[*]}" %{target}
 %if %{debug_logs}
@@ -731,17 +718,28 @@ mkdir -p %{buildroot}%{_mandir}/man1
 mkdir -p %{buildroot}%{_metainfodir}
 mkdir -p %{buildroot}%{_datadir}/applications
 mkdir -p %{buildroot}%{_datadir}/gnome-control-center/default-apps
+mkdir -p %{buildroot}%{_datadir}/icons/hicolor/symbolic/apps
 sed -e "s|@@CHROMIUMDIR@@|%{chromiumdir}|"     %{SOURCE10} > %{name}.sh
 install -m 755 %{name}.sh %{buildroot}%{_bindir}/%{name}
 install -m 644 %{SOURCE11} %{buildroot}%{_metainfodir}
-sed -e "s|@@MENUNAME@@|%{name}|g" -e "s|@@PACKAGE@@|%{name}|g" \
-    chrome/app/resources/manpage.1.in > chrome.1
+sed \
+  -e "s|@@MENUNAME@@|Chromium|g" \
+  -e "s|@@PACKAGE@@|%{name}|g" \
+  -e "s|@@SUMMARY@@|%{summary}|g" \
+  -e "s|@@XDG_SUBDIR@@|%{xdg_subdir}|g" \
+  chrome/app/resources/manpage.1.in >chrome.1
 install -m 644 chrome.1 %{buildroot}%{_mandir}/man1/%{name}.1
-sed -e "s|@@MENUNAME@@|%{name}|g" -e "s|@@PACKAGE@@|%{name}|g" -e "s|@@USR_BIN_SYMLINK_NAME@@|%{name}|g" \
-    chrome/installer/linux/common/desktop.template > %{name}.desktop
+sed \
+  -e "s|@@MENUNAME@@|%{menu_name}|g" \
+  -e "s|@@PACKAGE@@|%{name}|g" \
+  -e "s|@@USR_BIN_SYMLINK_NAME@@|%{name}|g" \
+  chrome/installer/linux/common/desktop.template >%{name}.desktop
 desktop-file-install --dir=%{buildroot}%{_datadir}/applications %{name}.desktop
-sed -e "s|@@MENUNAME@@|%{name}|g" -e "s|@@PACKAGE@@|%{name}|g" -e "s|@@INSTALLDIR@@|%{_bindir}|g" \
-chrome/installer/linux/common/default-app.template > %{name}.xml
+sed \
+  -e "s|@@INSTALLDIR@@|%{_bindir}|g" \
+  -e "s|@@MENUNAME@@|%{menu_name}|g" \
+  -e "s|@@PACKAGE@@|%{name}|g" \
+  chrome/installer/linux/common/default-app.template >%{name}.xml
 install -m 644 %{name}.xml %{buildroot}%{_datadir}/gnome-control-center/default-apps/
 install -m 755 %{target}/chrome %{buildroot}%{chromiumdir}/%{name}
 install -m 4755 %{target}/chrome_sandbox %{buildroot}%{chromiumdir}/chrome-sandbox
@@ -768,6 +766,8 @@ for i in 24 32 48 64 128 256; do
     install -m 644 chrome/app/theme/chromium/${dir}product_logo_$i.${ext} \
         %{buildroot}%{_datadir}/icons/hicolor/${i}x${i}/apps/%{name}.${ext}
 done
+install -m 644 %{SOURCE12} \
+  %{buildroot}%{_datadir}/icons/hicolor/symbolic/apps/%{name}-symbolic.svg
 ####################################check##################################################
 %check
 appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appdata.xml"
@@ -787,6 +787,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{_datadir}/icons/hicolor/64x64/apps/%{name}.png
 %{_datadir}/icons/hicolor/128x128/apps/%{name}.png
 %{_datadir}/icons/hicolor/256x256/apps/%{name}.png
+%{_datadir}/icons/hicolor/symbolic/apps/%{name}-symbolic.svg
 %{_mandir}/man1/%{name}.1.gz
 %dir %{chromiumdir}
 %{chromiumdir}/%{name}
@@ -806,6 +807,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
+* Mon Aug 31 2020 qvint <dotqvint@gmail.com> - 85.0.4183.83-1
+- Update Chromium to 85.0.4183.83
+
 * Thu Aug 13 2020 qvint <dotqvint@gmail.com> - 84.0.4147.125-1
 - Update Chromium to 84.0.4147.125
 - Update ungoogled-chromium to 84.0.4147.125-1
