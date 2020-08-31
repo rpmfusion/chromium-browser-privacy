@@ -1,6 +1,8 @@
 #Global Libraries
 #Do not turn it on in Fedora copr!
 %global freeworld 1
+# A switch to disable domain substitution for development purposes.
+%bcond_without domain_substitution
 %global menu_name Chromium (Freeworld)
 %global xdg_subdir chromium
 #This can be any folder on out
@@ -564,11 +566,13 @@ python3 -B %{ungoogled_chromium_root}/utils/patches.py apply . \
   %{ungoogled_chromium_root}/patches
 
 # ungoogled-chromium: domain substitution
+%if %{with domain_substitution}
 rm -f %{_builddir}/dsc.tar.gz
 python3 -B %{ungoogled_chromium_root}/utils/domain_substitution.py apply . \
   -r %{ungoogled_chromium_root}/domain_regex.list \
   -f %{ungoogled_chromium_root}/domain_substitution.list \
   -c %{_builddir}/dsc.tar.gz
+%endif
 
 #####################################BUILD#############################################
 %build
@@ -810,6 +814,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 * Mon Aug 31 2020 qvint <dotqvint@gmail.com> - 85.0.4183.83-1
 - Update Chromium to 85.0.4183.83
 - Update ungoogled-chromium to 76c9694
+- Add domain_substitution switch
 
 * Thu Aug 13 2020 qvint <dotqvint@gmail.com> - 84.0.4147.125-1
 - Update Chromium to 84.0.4147.125
