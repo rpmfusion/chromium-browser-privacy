@@ -85,7 +85,7 @@ Source0:        chromium-%{version}-clean.tar.xz
 Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_revision}/chromium-patches-%{patchset_revision}.tar.gz
 
 # ungoogled-chromium.
-%global ungoogled_chromium_revision 84.0.4147.125-1
+%global ungoogled_chromium_revision 76c969401b10e2cbced802e915accb33382f9d0f
 Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 
 # The following two source files are copied and modified from the chromium source
@@ -641,7 +641,7 @@ gn_args=(
     'google_default_client_id="%{default_client_id}"'
     'google_default_client_secret="%{default_client_secret}"'
 
-    closure_compile=false
+    enable_js_type_check=false
     enable_mdns=false
     enable_mse_mpeg2ts_stream_parser=true
     enable_nacl_nonsfi=false
@@ -809,6 +809,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %changelog
 * Mon Aug 31 2020 qvint <dotqvint@gmail.com> - 85.0.4183.83-1
 - Update Chromium to 85.0.4183.83
+- Update ungoogled-chromium to 76c9694
 
 * Thu Aug 13 2020 qvint <dotqvint@gmail.com> - 84.0.4147.125-1
 - Update Chromium to 84.0.4147.125
