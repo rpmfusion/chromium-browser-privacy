@@ -3,8 +3,8 @@
 %global freeworld 1
 # A switch to disable domain substitution for development purposes.
 %bcond_without domain_substitution
-%global menu_name Chromium (Freeworld)
-%global xdg_subdir chromium
+%global menu_name Chromium (CBP)
+%global xdg_subdir ungoogled-chromium
 #This can be any folder on out
 %global target out/Release
 ### Google API keys (see http://www.chromium.org/developers/how-tos/api-keys)
@@ -232,7 +232,7 @@ Patch500:       chromium-default-user-data-dir.patch
 Patch600:       chromium-widevine-locations.patch
 
 %description
-%{name} is an ungoogled-chromium distribution.
+%{name} is a distribution of ungoogled-chromium.
 
 ungoogled-chromium is Chromium, sans integration with Google. It also features
 some tweaks to enhance privacy, control, and transparency (almost all of which
@@ -815,6 +815,8 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 - Update Chromium to 85.0.4183.83
 - Update ungoogled-chromium to 76c9694
 - Add domain_substitution switch
+- Fix manpage and desktop metadata files
+- Update AppStream metadata
 
 * Thu Aug 13 2020 qvint <dotqvint@gmail.com> - 84.0.4147.125-1
 - Update Chromium to 84.0.4147.125
