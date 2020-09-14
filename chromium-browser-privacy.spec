@@ -75,7 +75,7 @@ Source0:        chromium-%{version}-clean.tar.xz
 Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_revision}/chromium-patches-%{patchset_revision}.tar.gz
 
 # ungoogled-chromium.
-%global ungoogled_chromium_revision 76c969401b10e2cbced802e915accb33382f9d0f
+%global ungoogled_chromium_revision 85.0.4183.102-1
 Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 
 # The following two source files are copied and modified from the chromium source
@@ -747,7 +747,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %changelog
 * Mon Sep 14 2020 qvint <dotqvint@gmail.com> - 85.0.4183.102-1
 - Update Chromium to 85.0.4183.102
-- Update ungoogled-chromium to 76c9694
+- Update ungoogled-chromium to 85.0.4183.102-1
 - Add domain_substitution switch
 - Fix manpage and desktop metadata files
 - Update AppStream metadata
