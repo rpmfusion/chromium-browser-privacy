@@ -18,22 +18,10 @@
 %global __requires_exclude %{chromiumdir}/.*\\.so
 %global __provides_exclude_from %{chromiumdir}/.*\\.so
 #######################################CONFIGS###########################################
-# Fedora's Python 2 stack is being removed, we use the bundled Python libraries
-# This can be revisited once we upgrade to Python 3
-%global bundlepylibs 1
-%if 0%{bundlepylibs}
-%bcond_with system_ply
-%else
-%bcond_without system_ply
-%endif
 #Require harfbuzz >= 2.4.0 for hb_subset_input_set_retain_gids
 %bcond_without system_harfbuzz
 # Require libxml2 > 2.9.4 for XML_PARSE_NOXXE
 %bcond_without system_libxml2
-
-# Clang toggle
-%global clang 0
-
 # Allow testing whether icu can be unbundled
 # A patch fix building so enabled by default for Fedora 30
 # Need icu version >= 64
@@ -58,7 +46,7 @@
 %global ozone 0
 ##############################Package Definitions######################################
 Name:           chromium-browser-privacy
-Version:        85.0.4183.83
+Version:        85.0.4183.102
 Release:        1%{?dist}
 Summary:        Chromium, sans integration with Google
 License:        BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -103,11 +91,7 @@ Source15:       LICENSE
 ########################################################################################
 #Compiler settings
 # Make sure we don't encounter any bug
-%if %{clang}
-BuildRequires:  clang, llvm, lld
-%else
 BuildRequires:  gcc-c++
-%endif
 # Basic tools and libraries needed for building
 BuildRequires:  ninja-build, nodejs, bison, gperf, hwdata
 BuildRequires:  libgcc, glibc, libatomic
@@ -133,27 +117,8 @@ BuildRequires:  pkgconfig(wayland-cursor)
 BuildRequires:  pkgconfig(wayland-scanner)
 BuildRequires:  pkgconfig(wayland-server)
 %endif
-# ungoogled-chromium dependencies
 BuildRequires:  python3
-
-#Python stuffs
-%if 0%{?bundlepylibs}
-
-# Using bundled bits, do nothing.
-#This is needed for remove_bundled_libraries.py
 BuildRequires:  /usr/bin/python2
-
-%else
-BuildRequires:  python2-rpm-macros
-BuildRequires:  python2-beautifulsoup4
-BuildRequires:  python2-lxml
-BuildRequires:  python2-html5lib
-BuildRequires:  python2-markupsafe
-Buildrequires:  python2-six
-%if %{with system_ply}
-BuildRequires:  python2-ply
-%endif
-%endif
 BuildRequires:  python2-setuptools
 %if %{with system_re2}
 BuildRequires:  re2-devel
@@ -329,10 +294,8 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/catapult \
     third_party/catapult/common/py_vulcanize/third_party/rcssmin \
     third_party/catapult/common/py_vulcanize/third_party/rjsmin \
-%if 0%{?bundlepylibs}
     third_party/catapult/third_party/beautifulsoup4 \
     third_party/catapult/third_party/html5lib-python \
-%endif
     third_party/catapult/third_party/polymer \
     third_party/catapult/third_party/six \
     third_party/catapult/tracing/third_party/d3 \
@@ -414,9 +377,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/lss \
     third_party/lzma_sdk \
     third_party/mako \
-%if 0%{?bundlepylibs}
     third_party/markupsafe \
-%endif
     third_party/mesa \
     third_party/metrics_proto \
 %if %{ozone}
@@ -448,9 +409,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/pdfium/third_party/skia_shared \
     third_party/perfetto \
     third_party/pffft \
-%if !%{with system_ply}
     third_party/ply \
-%endif
     third_party/polymer \
     third_party/private-join-and-compute \
     third_party/protobuf \
@@ -548,15 +507,6 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
 sed -i 's|//third_party/usb_ids|/usr/share/hwdata|g' \
     services/device/public/cpp/usb/BUILD.gn
 
-%if !0%{?bundlepylibs}
-rmdir third_party/markupsafe
-ln -s %{python2_sitearch}/markupsafe third_party/markupsafe
-%if %{with system_ply}
-rmdir third_party/ply
-ln -s %{python2_sitelib}/ply third_party/ply
-%endif
-%endif
-
 # Fix the path to nodejs binary
 mkdir -p third_party/node/linux/node-linux-x64/bin
 ln -s %{_bindir}/node third_party/node/linux/node-linux-x64/bin/node
@@ -580,17 +530,6 @@ python3 -B %{ungoogled_chromium_root}/utils/domain_substitution.py apply . \
 ulimit -n 2048
 
 #export compilar variables
-
-%if %{clang}
-
-export AR=llvm-ar NM=llvm-nm AS=llvm-as
-export CC=clang CXX=clang++
-
-# Add required compiler flags here
-export CXXFLAGS="$CXXFLAGS -Wno-unknown-warning-option"
-export CFLAGS="$CFLAGS -Wno-unknown-warning-option"
-
-%else
 export AR=ar NM=nm AS=as
 export CC=gcc CXX=g++
 export CXXFLAGS="$CXXFLAGS -fpermissive"
@@ -602,8 +541,6 @@ export CXXFLAGS="$CXXFLAGS -w"
 %if !%{debug_pkg}
 export CFLAGS="$CFLAGS -g0"
 export CXXFLAGS="$CXXFLAGS -g0"
-%endif
-#end compiler part
 %endif
 
 gn_args=(
@@ -670,14 +607,7 @@ gn_args+=(
 
 
 gn_args+=(
-%if %{clang}
-    is_clang=true
-    'clang_base_path="/usr"'
-    clang_use_chrome_plugins=false
-    use_lld=true
-%else
     is_clang=false
-%endif
 )
 
 #Pipewire
@@ -748,6 +678,8 @@ install -m 644 %{name}.xml %{buildroot}%{_datadir}/gnome-control-center/default-
 install -m 755 %{target}/chrome %{buildroot}%{chromiumdir}/%{name}
 install -m 4755 %{target}/chrome_sandbox %{buildroot}%{chromiumdir}/chrome-sandbox
 install -m 755 %{target}/chromedriver %{buildroot}%{chromiumdir}/
+install -m 755 %{target}/libEGL.so %{buildroot}%{chromiumdir}/
+install -m 755 %{target}/libGLESv2.so %{buildroot}%{chromiumdir}/
 %if !%{with system_libicu}
 install -m 644 %{target}/icudtl.dat %{buildroot}%{chromiumdir}/
 %endif
@@ -797,6 +729,8 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/%{name}
 %{chromiumdir}/chrome-sandbox
 %{chromiumdir}/chromedriver
+%{chromiumdir}/libEGL.so
+%{chromiumdir}/libGLESv2.so
 %if !%{with system_libicu}
 %{chromiumdir}/icudtl.dat
 %endif
@@ -811,8 +745,8 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
-* Mon Aug 31 2020 qvint <dotqvint@gmail.com> - 85.0.4183.83-1
-- Update Chromium to 85.0.4183.83
+* Mon Sep 14 2020 qvint <dotqvint@gmail.com> - 85.0.4183.102-1
+- Update Chromium to 85.0.4183.102
 - Update ungoogled-chromium to 76c9694
 - Add domain_substitution switch
 - Fix manpage and desktop metadata files
