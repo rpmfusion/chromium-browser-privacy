@@ -18,35 +18,17 @@
 %global __requires_exclude %{chromiumdir}/.*\\.so
 %global __provides_exclude_from %{chromiumdir}/.*\\.so
 #######################################CONFIGS###########################################
-#Require harfbuzz >= 2.4.0 for hb_subset_input_set_retain_gids
-%bcond_without system_harfbuzz
-# Require libxml2 > 2.9.4 for XML_PARSE_NOXXE
-%bcond_without system_libxml2
-# Allow testing whether icu can be unbundled
-# A patch fix building so enabled by default for Fedora 30
-# Need icu version >= 64
-%bcond_with system_libicu
-# Allow testing whether libvpx can be unbundled
-%bcond_with system_libvpx
-# Allow testing whether ffmpeg can be unbundled
-%bcond_without system_ffmpeg
-#Allow minizip to be unbundled
-#mini-compat is going to be removed from fedora 30!
-%bcond_without system_minizip
-
-# Need re2 ver. 2016.07.21 for re2::LazyRE2
-%bcond_with system_re2
-
-#Turn on verbose mode
-%global debug_logs 0
-#------------------------------------------------------
-#Build debug packages for debugging
-%global debug_pkg 0
-# Enable building with ozone support
-%global ozone 0
+# System libraries to use.
+%global system_ffmpeg 1
+%global system_harfbuzz 1
+%global system_libicu 0
+%global system_libvpx 0
+%global system_libxml2 1
+%global system_minizip 1
+%global system_re2 1
 ##############################Package Definitions######################################
 Name:           chromium-browser-privacy
-Version:        85.0.4183.102
+Version:        87.0.4280.88
 Release:        1%{?dist}
 Summary:        Chromium, sans integration with Google
 License:        BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -71,7 +53,7 @@ Source0:        chromium-%{version}-clean.tar.xz
 %endif
 
 # Patchset composed by Stephan Hartmann.
-%global patchset_revision chromium-85-patchset-2
+%global patchset_revision chromium-87-patchset-9
 Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_revision}/chromium-patches-%{patchset_revision}.tar.gz
 
 # ungoogled-chromium.
@@ -97,7 +79,7 @@ BuildRequires:  ninja-build, nodejs, bison, gperf, hwdata
 BuildRequires:  libgcc, glibc, libatomic
 BuildRequires:  libcap-devel, cups-devel, alsa-lib-devel
 BuildRequires:  mesa-libGL-devel, mesa-libEGL-devel
-%if %{with system_minizip}
+%if %{system_minizip}
 BuildRequires:  minizip-compat-devel
 %endif
 # Pipewire need this.
@@ -111,39 +93,37 @@ BuildRequires:  pkgconfig(libffi)
 #for vaapi
 BuildRequires:  pkgconfig(libva)
 BuildRequires:  pkgconfig(gbm)
-%if %{ozone}
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-cursor)
 BuildRequires:  pkgconfig(wayland-scanner)
 BuildRequires:  pkgconfig(wayland-server)
-%endif
 BuildRequires:  python3
 BuildRequires:  /usr/bin/python2
 BuildRequires:  python2-setuptools
-%if %{with system_re2}
+%if %{system_re2}
 BuildRequires:  re2-devel
 %endif
 # replace_gn_files.py --system-libraries
 BuildRequires:  flac-devel
 BuildRequires:  freetype-devel
-%if %{with system_harfbuzz}
+%if %{system_harfbuzz}
 BuildRequires:  harfbuzz-devel
 %endif
-%if %{with system_libicu}
+%if %{system_libicu}
 BuildRequires:  libicu-devel
 %endif
 BuildRequires:  libdrm-devel
 BuildRequires:  libjpeg-turbo-devel
 BuildRequires:  libpng-devel
 # Chromium requires libvpx 1.5.0 and some non-default options
-%if %{with system_libvpx}
+%if %{system_libvpx}
 BuildRequires:  libvpx-devel
 %endif
-%if %{with system_ffmpeg}
+%if %{system_ffmpeg}
 BuildRequires:  ffmpeg-devel
 %endif
 BuildRequires:  libwebp-devel
-%if %{with system_libxml2}
+%if %{system_libxml2}
 BuildRequires:  pkgconfig(libxml-2.0)
 %endif
 BuildRequires:  pkgconfig(libxslt)
@@ -165,30 +145,25 @@ BuildRequires:  libstdc++-static
 Requires:       hicolor-icon-theme
 #Some recommendations
 Recommends:     libva-utils
-%if !%{debug_pkg}
 %global debug_package %{nil}
-%endif
 # This build should be only available to amd64
 ExclusiveArch:  x86_64
-
-# Google patches (short-term fixes and backports):
-%if 0%{?fedora} >= 33
-Patch150:       chromium-85-ffmpeg-4.3-r796966.patch
-%endif
-
-# Gentoo patches (short-term fixes):
 
 # Fedora patches:
 Patch300:       chromium-py2-bootstrap.patch
 
 # RPM Fusion patches [free/chromium-freeworld]:
-Patch400:       chromium-enable-vaapi.patch
+Patch400:       chromium-hw-accel-mjpeg.patch
 Patch401:       chromium-fix-vaapi-on-intel.patch
 Patch402:       chromium-enable-widevine.patch
 Patch403:       chromium-manpage.patch
+Patch404:       chromium-md5-based-build-id.patch
 %if %{freeworld}
 Patch420:       chromium-rpm-fusion-brand.patch
 %endif
+
+# RPM Fusion patches [free/chromium-freeworld] -- short-term:
+Patch450:       chromium-87-includes.patch
 
 # RPM Fusion patches [free/chromium-browser-privacy]:
 Patch500:       chromium-default-user-data-dir.patch
@@ -217,21 +192,16 @@ browser, ungoogled-chromium is essentially a drop-in replacement for Chromium.
 
 # Apply patchset composed by Stephan Hartmann.
 %global patchset_apply() %{__scm_apply_patch -p1} <%{patchset_root}/%{1}
-%patchset_apply chromium-blink-gcc-diagnostic-pragma.patch
 %patchset_apply chromium-fix-char_traits.patch
-%patchset_apply chromium-quiche-invalid-offsetof.patch
 %patchset_apply chromium-78-protobuf-RepeatedPtrField-export.patch
 %patchset_apply chromium-79-gcc-protobuf-alignas.patch
-%patchset_apply chromium-80-QuicStreamSendBuffer-deleted-move-constructor.patch
 %patchset_apply chromium-84-blink-disable-clang-format.patch
-%patchset_apply chromium-85-DelayNode-cast.patch
-%patchset_apply chromium-85-FrameWidget-namespace.patch
-%patchset_apply chromium-85-NearbyConnection-abstract.patch
-%patchset_apply chromium-85-NearbyShareEncryptedMetadataKey-include.patch
-%patchset_apply chromium-85-oscillator_node-cast.patch
-%patchset_apply chromium-85-ostream-operator.patch
-%patchset_apply chromium-85-ozone-include.patch
-%patchset_apply chromium-85-sim_hash-include.patch
+%patchset_apply chromium-86-nearby-explicit.patch
+%patchset_apply chromium-86-nearby-include.patch
+%patchset_apply chromium-87-ServiceWorkerContainerHost-crash.patch
+%patchset_apply chromium-87-openscreen-include.patch
+%patchset_apply chromium-88-ityp-include.patch
+%patchset_apply chromium-88-vaapi-attribute.patch
 
 # ungoogled-chromium: binary pruning.
 python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
@@ -290,7 +260,6 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/breakpad \
     third_party/breakpad/breakpad/src/third_party/curl \
     third_party/brotli \
-    third_party/cacheinvalidation \
     third_party/catapult \
     third_party/catapult/common/py_vulcanize/third_party/rcssmin \
     third_party/catapult/common/py_vulcanize/third_party/rjsmin \
@@ -319,14 +288,22 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/devscripts \
     third_party/devtools-frontend \
     third_party/devtools-frontend/src/front_end/third_party/acorn \
+    third_party/devtools-frontend/src/front_end/third_party/axe-core \
+    third_party/devtools-frontend/src/front_end/third_party/chromium \
     third_party/devtools-frontend/src/front_end/third_party/codemirror \
     third_party/devtools-frontend/src/front_end/third_party/fabricjs \
+    third_party/devtools-frontend/src/front_end/third_party/i18n \
+    third_party/devtools-frontend/src/front_end/third_party/intl-messageformat \
     third_party/devtools-frontend/src/front_end/third_party/lighthouse \
+    third_party/devtools-frontend/src/front_end/third_party/lit-html \
+    third_party/devtools-frontend/src/front_end/third_party/lodash-isequal \
+    third_party/devtools-frontend/src/front_end/third_party/marked \
+    third_party/devtools-frontend/src/front_end/third_party/puppeteer \
     third_party/devtools-frontend/src/front_end/third_party/wasmparser \
     third_party/devtools-frontend/src/third_party \
     third_party/dom_distiller_js \
     third_party/emoji-segmenter \
-%if !%{with system_ffmpeg}
+%if !%{system_ffmpeg}
     third_party/ffmpeg \
 %endif
     third_party/flatbuffers \
@@ -335,13 +312,13 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/google_input_tools/third_party/closure_library \
     third_party/google_input_tools/third_party/closure_library/third_party/closure \
     third_party/googletest \
-%if !%{with system_harfbuzz}
+%if !%{system_harfbuzz}
     third_party/harfbuzz-ng \
 %endif
     third_party/harfbuzz-ng/utils \
     third_party/hunspell \
     third_party/iccjpeg \
-%if !%{with system_libicu}
+%if !%{system_libicu}
     third_party/icu \
 %endif
     third_party/inspector_protocol \
@@ -361,12 +338,12 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/libsrtp \
     third_party/libsync \
     third_party/libudev \
-%if !%{with system_libvpx}
+%if !%{system_libvpx}
     third_party/libvpx \
     third_party/libvpx/source/libvpx/third_party/x86inc \
 %endif
     third_party/libwebm \
-%if %{with system_libxml2}
+%if %{system_libxml2}
     third_party/libxml/chromium \
 %else
     third_party/libxml \
@@ -380,14 +357,13 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/markupsafe \
     third_party/mesa \
     third_party/metrics_proto \
-%if %{ozone}
     third_party/minigbm \
-%endif
-%if !%{with system_minizip}
+%if !%{system_minizip}
     third_party/minizip/ \
 %endif
     third_party/modp_b64 \
     third_party/nasm \
+    third_party/nearby \
     third_party/node \
     third_party/node/node_modules/polymer-bundler/lib/third_party/UglifyJS2 \
     third_party/one_euro_filter \
@@ -412,16 +388,20 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/ply \
     third_party/polymer \
     third_party/private-join-and-compute \
+    third_party/private_membership \
     third_party/protobuf \
     third_party/protobuf/third_party/six \
     third_party/pyjson5 \
     third_party/qcms \
-%if !%{with system_re2}
+%if !%{system_re2}
     third_party/re2 \
 %endif
     third_party/rnnoise \
     third_party/s2cellid \
     third_party/schema_org \
+    third_party/securemessage \
+    third_party/shaka-player \
+    third_party/shell-encryption \
     third_party/skia \
     third_party/skia/include/third_party/skcms \
     third_party/skia/include/third_party/vulkan \
@@ -440,13 +420,12 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/swiftshader/third_party/subzero \
     third_party/swiftshader/third_party/SPIRV-Headers/include/spirv/unified1 \
     third_party/tcmalloc \
+    third_party/ukey2 \
     third_party/unrar \
     third_party/usb_ids \
     third_party/usrsctp \
     third_party/vulkan \
-%if %{ozone}
     third_party/wayland \
-%endif
     third_party/web-animations-js \
     third_party/webdriver \
     third_party/webrtc \
@@ -462,8 +441,9 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/xcbproto \
     third_party/xdg-utils \
     third_party/zlib/google \
+    third_party/zxcvbn-cpp \
     tools/grit/third_party/six \
-%if !%{with system_minizip}
+%if !%{system_minizip}
     third_party/zlib \
 %endif
     tools/gn/src/base/third_party/icu \
@@ -475,32 +455,32 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     v8/third_party/v8
 
 ./build/linux/unbundle/replace_gn_files.py --system-libraries \
-%if %{with system_ffmpeg}
+%if %{system_ffmpeg}
     ffmpeg \
 %endif
     flac \
     freetype \
     fontconfig \
-%if %{with system_libicu}
+%if %{system_libicu}
     icu \
 %endif
     libdrm \
     libjpeg \
     libpng \
-%if %{with system_libvpx}
+%if %{system_libvpx}
     libvpx \
 %endif
     libwebp \
-%if %{with system_libxml2}
+%if %{system_libxml2}
     libxml \
 %endif
     libxslt \
     opus \
-%if %{with system_re2}
+%if %{system_re2}
     re2 \
 %endif
     snappy \
-%if %{with system_minizip}
+%if %{system_minizip}
     zlib
 %endif
 
@@ -533,15 +513,10 @@ ulimit -n 2048
 export AR=ar NM=nm AS=as
 export CC=gcc CXX=g++
 export CXXFLAGS="$CXXFLAGS -fpermissive"
-%if !%{debug_logs}
-# Disable useless warning on non debug log builds
 export CFLAGS="$CFLAGS -w"
 export CXXFLAGS="$CXXFLAGS -w"
-%endif
-%if !%{debug_pkg}
 export CFLAGS="$CFLAGS -g0"
 export CXXFLAGS="$CXXFLAGS -g0"
-%endif
 
 gn_args=(
     is_debug=false
@@ -561,7 +536,7 @@ gn_args=(
     link_pulseaudio=true
     use_system_freetype=true
     enable_widevine=true
-%if %{with system_harfbuzz}
+%if %{system_harfbuzz}
     use_system_harfbuzz=true
 %endif
 %if %{freeworld}
@@ -572,7 +547,7 @@ gn_args=(
     proprietary_codecs=false
 %endif
     enable_nacl=false
-    enable_hangout_services_extension=false
+    enable_hangout_services_extension=true
     fatal_linker_warnings=false
     treat_warnings_as_errors=false
     fieldtrial_testing_like_official_build=true
@@ -600,7 +575,7 @@ gn_args=(
 # Optimizations
 gn_args+=(
    enable_vr=false
-%if %{with system_libicu}
+%if %{system_libicu}
    icu_use_data_file=false
 %endif
 )
@@ -616,33 +591,15 @@ gn_args+=(
      rtc_link_pipewire=true
 )
 
-# Ozone stuff : Whole work is done completely upstream.
-gn_args+=(
-%if %{ozone}
-    use_ozone=true
-    use_system_minigbm=true
-    use_xkbcommon=true
-%endif
-)
-
-
 #symbol
 gn_args+=(
-%if %{debug_pkg}
-    symbol_level=1
-%else
     symbol_level=0
     blink_symbol_level=0
-%endif
 )
 
 tools/gn/bootstrap/bootstrap.py  --gn-gen-args "${gn_args[*]}"
 %{target}/gn --script-executable=%{__python2} gen --args="${gn_args[*]}" %{target}
-%if %{debug_logs}
-ninja  %{_smp_mflags} -C %{target} -v  chrome chrome_sandbox chromedriver
-%else
-ninja  %{_smp_mflags} -C %{target}   chrome chrome_sandbox chromedriver
-%endif
+%ninja_build -C %{target} chrome chrome_sandbox chromedriver
 ######################################Install####################################
 %install
 mkdir -p %{buildroot}%{_bindir}
@@ -680,7 +637,7 @@ install -m 4755 %{target}/chrome_sandbox %{buildroot}%{chromiumdir}/chrome-sandb
 install -m 755 %{target}/chromedriver %{buildroot}%{chromiumdir}/
 install -m 755 %{target}/libEGL.so %{buildroot}%{chromiumdir}/
 install -m 755 %{target}/libGLESv2.so %{buildroot}%{chromiumdir}/
-%if !%{with system_libicu}
+%if !%{system_libicu}
 install -m 644 %{target}/icudtl.dat %{buildroot}%{chromiumdir}/
 %endif
 install -m 644 %{target}/v8_context_snapshot.bin %{buildroot}%{chromiumdir}/
@@ -731,7 +688,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/chromedriver
 %{chromiumdir}/libEGL.so
 %{chromiumdir}/libGLESv2.so
-%if !%{with system_libicu}
+%if !%{system_libicu}
 %{chromiumdir}/icudtl.dat
 %endif
 %{chromiumdir}/v8_context_snapshot.bin
@@ -745,6 +702,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
+* Thu Dec 10 2020 qvint <dotqvint@gmail.com> - 87.0.4280.88-1
+- Update Chromium to 87.0.4280.88
+
 * Mon Sep 14 2020 qvint <dotqvint@gmail.com> - 85.0.4183.102-1
 - Update Chromium to 85.0.4183.102
 - Update ungoogled-chromium to 85.0.4183.102-1
