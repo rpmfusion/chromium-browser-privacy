@@ -57,7 +57,7 @@ Source0:        chromium-%{version}-clean.tar.xz
 Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_revision}/chromium-patches-%{patchset_revision}.tar.gz
 
 # ungoogled-chromium.
-%global ungoogled_chromium_revision 85.0.4183.102-1
+%global ungoogled_chromium_revision 87.0.4280.88-1
 Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 
 # The following two source files are copied and modified from the chromium source
@@ -151,6 +151,7 @@ ExclusiveArch:  x86_64
 
 # Fedora patches:
 Patch300:       chromium-py2-bootstrap.patch
+Patch320:       chromium-widevine-locations.patch
 
 # RPM Fusion patches [free/chromium-freeworld]:
 Patch400:       chromium-hw-accel-mjpeg.patch
@@ -167,9 +168,6 @@ Patch450:       chromium-87-includes.patch
 
 # RPM Fusion patches [free/chromium-browser-privacy]:
 Patch500:       chromium-default-user-data-dir.patch
-
-# Additional patches:
-Patch600:       chromium-widevine-locations.patch
 
 %description
 %{name} is a distribution of ungoogled-chromium.
@@ -547,7 +545,7 @@ gn_args=(
     proprietary_codecs=false
 %endif
     enable_nacl=false
-    enable_hangout_services_extension=true
+    enable_hangout_services_extension=false
     fatal_linker_warnings=false
     treat_warnings_as_errors=false
     fieldtrial_testing_like_official_build=true
@@ -704,6 +702,7 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %changelog
 * Thu Dec 10 2020 qvint <dotqvint@gmail.com> - 87.0.4280.88-1
 - Update Chromium to 87.0.4280.88
+- Update ungoogled-chromium to 87.0.4280.88-1
 
 * Mon Sep 14 2020 qvint <dotqvint@gmail.com> - 85.0.4183.102-1
 - Update Chromium to 85.0.4183.102
