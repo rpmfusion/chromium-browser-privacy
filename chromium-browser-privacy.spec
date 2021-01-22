@@ -55,7 +55,7 @@ Source0:        chromium-%{version}-clean.tar.xz
 Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_revision}/chromium-patches-%{patchset_revision}.tar.gz
 
 # ungoogled-chromium.
-%global ungoogled_chromium_revision 87.0.4280.88-1
+%global ungoogled_chromium_revision 88.0.4324.104-1
 Source300:      https://github.com/Eloston/ungoogled-chromium/archive/%{ungoogled_chromium_revision}/ungoogled-chromium-%{ungoogled_chromium_revision}.tar.gz
 
 # The following two source files are copied and modified from the chromium source
@@ -707,8 +707,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
-* Fri Jan 22 2021 qvint <dotqvint@gmail.com> - 88.0.4324.96-1
+* Sat Jan 30 2021 qvint <dotqvint@gmail.com> - 88.0.4324.96-1
 - Update Chromium to 88.0.4324.96
+- Update ungoogled-chromium to 88.0.4324.104-1
 
 * Thu Dec 10 2020 qvint <dotqvint@gmail.com> - 87.0.4280.88-1
 - Update Chromium to 87.0.4280.88
