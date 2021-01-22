@@ -12,8 +12,6 @@
 ### For your own distribution, please get your own set of keys.
 ### http://lists.debian.org/debian-legal/2013/11/msg00006.html
 %global api_key %{nil}
-%global default_client_id %{nil}
-%global default_client_secret %{nil}
 ###############################Exclude Private chromium libs###########################
 %global __requires_exclude %{chromiumdir}/.*\\.so
 %global __provides_exclude_from %{chromiumdir}/.*\\.so
@@ -28,7 +26,7 @@
 %global system_re2 1
 ##############################Package Definitions######################################
 Name:           chromium-browser-privacy
-Version:        87.0.4280.88
+Version:        88.0.4324.96
 Release:        1%{?dist}
 Summary:        Chromium, sans integration with Google
 License:        BSD and LGPLv2+ and ASL 2.0 and IJG and MIT and GPLv2+ and ISC and OpenSSL and (MPLv1.1 or GPLv2 or LGPLv2)
@@ -53,7 +51,7 @@ Source0:        chromium-%{version}-clean.tar.xz
 %endif
 
 # Patchset composed by Stephan Hartmann.
-%global patchset_revision chromium-87-patchset-9
+%global patchset_revision chromium-88-patchset-3
 Source1:        https://github.com/stha09/chromium-patches/archive/%{patchset_revision}/chromium-patches-%{patchset_revision}.tar.gz
 
 # ungoogled-chromium.
@@ -159,12 +157,10 @@ Patch401:       chromium-fix-vaapi-on-intel.patch
 Patch402:       chromium-enable-widevine.patch
 Patch403:       chromium-manpage.patch
 Patch404:       chromium-md5-based-build-id.patch
+Patch405:       chromium-names.patch
 %if %{freeworld}
 Patch420:       chromium-rpm-fusion-brand.patch
 %endif
-
-# RPM Fusion patches [free/chromium-freeworld] -- short-term:
-Patch450:       chromium-87-includes.patch
 
 # RPM Fusion patches [free/chromium-browser-privacy]:
 Patch500:       chromium-default-user-data-dir.patch
@@ -194,10 +190,14 @@ browser, ungoogled-chromium is essentially a drop-in replacement for Chromium.
 %patchset_apply chromium-78-protobuf-RepeatedPtrField-export.patch
 %patchset_apply chromium-79-gcc-protobuf-alignas.patch
 %patchset_apply chromium-84-blink-disable-clang-format.patch
-%patchset_apply chromium-86-nearby-explicit.patch
-%patchset_apply chromium-86-nearby-include.patch
-%patchset_apply chromium-87-ServiceWorkerContainerHost-crash.patch
 %patchset_apply chromium-87-openscreen-include.patch
+%patchset_apply chromium-88-AXTreeFormatter-include.patch
+%patchset_apply chromium-88-BookmarkModelObserver-include.patch
+%patchset_apply chromium-88-CompositorFrameReporter-dcheck.patch
+%patchset_apply chromium-88-StringPool-include.patch
+%patchset_apply chromium-88-dawn-static.patch
+%patchset_apply chromium-88-federated_learning-include.patch
+%patchset_apply chromium-88-ideographicSpaceCharacter.patch
 %patchset_apply chromium-88-ityp-include.patch
 %patchset_apply chromium-88-vaapi-attribute.patch
 
@@ -281,6 +281,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/crc32c \
     third_party/cros_system_api \
     third_party/dawn \
+    third_party/dawn/third_party/khronos \
     third_party/depot_tools \
     third_party/dav1d \
     third_party/devscripts \
@@ -306,6 +307,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
 %endif
     third_party/flatbuffers \
     third_party/freetype \
+    third_party/fusejs \
     third_party/google_input_tools \
     third_party/google_input_tools/third_party/closure_library \
     third_party/google_input_tools/third_party/closure_library/third_party/closure \
@@ -341,6 +343,8 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/libvpx/source/libvpx/third_party/x86inc \
 %endif
     third_party/libwebm \
+    third_party/libx11 \
+    third_party/libxcb-keysyms \
 %if %{system_libxml2}
     third_party/libxml/chromium \
 %else
@@ -407,6 +411,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/skia/third_party/skcms \
     third_party/smhasher \
     third_party/speech-dispatcher \
+    third_party/spirv-cross/spirv-cross \
     third_party/spirv-headers \
     third_party/SPIRV-Tools \
     third_party/sqlite \
@@ -418,6 +423,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/swiftshader/third_party/subzero \
     third_party/swiftshader/third_party/SPIRV-Headers/include/spirv/unified1 \
     third_party/tcmalloc \
+    third_party/tint \
     third_party/ukey2 \
     third_party/unrar \
     third_party/usb_ids \
@@ -436,6 +442,7 @@ find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(pyt
     third_party/webrtc/rtc_base/third_party/sigslot \
     third_party/widevine \
     third_party/woff2 \
+    third_party/x11proto \
     third_party/xcbproto \
     third_party/xdg-utils \
     third_party/zlib/google \
@@ -517,6 +524,8 @@ export CFLAGS="$CFLAGS -g0"
 export CXXFLAGS="$CXXFLAGS -g0"
 
 gn_args=(
+    'rpm_fusion_package_name="%{name}"'
+    'rpm_fusion_menu_name="%{menu_name}"'
     is_debug=false
     use_vaapi=true
     is_component_build=false
@@ -552,8 +561,6 @@ gn_args=(
     'custom_toolchain="//build/toolchain/linux/unbundle:default"'
     'host_toolchain="//build/toolchain/linux/unbundle:default"'
     'google_api_key="%{api_key}"'
-    'google_default_client_id="%{default_client_id}"'
-    'google_default_client_secret="%{default_client_secret}"'
 
     enable_js_type_check=false
     enable_mdns=false
@@ -700,6 +707,9 @@ appstream-util validate-relax --nonet "%{buildroot}%{_metainfodir}/%{name}.appda
 %{chromiumdir}/swiftshader/libGLESv2.so
 #########################################changelogs#################################################
 %changelog
+* Fri Jan 22 2021 qvint <dotqvint@gmail.com> - 88.0.4324.96-1
+- Update Chromium to 88.0.4324.96
+
 * Thu Dec 10 2020 qvint <dotqvint@gmail.com> - 87.0.4280.88-1
 - Update Chromium to 87.0.4280.88
 - Update ungoogled-chromium to 87.0.4280.88-1

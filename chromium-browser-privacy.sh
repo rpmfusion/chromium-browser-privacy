@@ -7,13 +7,11 @@
 # This file is obtained from https://src.fedoraproject.org/rpms/chromium/
 # and modified by Akarshan Biswas <akarshanbiswas@fedoraproject.org>. All modifications are also
 # licensed under 3-clause BSD license.
-CHROMIUM_DISTRO_FLAGS=()
 
 # Let the wrapped binary know that it has been run through the wrapper.
 export CHROME_WRAPPER="$(readlink -f "$0")"
 
 HERE="`dirname "$CHROME_WRAPPER"`"
-export CHROME_DESKTOP="chromium-browser-privacy.desktop"
 # We include some xdg utilities next to the binary, and we want to prefer them
 # over the system versions when we know the system versions are very old. We
 # detect whether the system xdg utilities are sufficiently new to be likely to
@@ -39,12 +37,11 @@ else
 fi
 export LD_LIBRARY_PATH
 
-#On wayland pass the correct GDK_BACKEND
-# In future this will be used for running chromium natively on Wayland
-if [ $XDG_SESSION_TYPE == "wayland" ]; then
-export GDK_BACKEND=x11
-fi
+# We don't want bug-buddy intercepting our crashes. http://crbug.com/24120
+export GNOME_DISABLE_CRASH_DIALOG=SET_BY_GOOGLE_CHROME
 
+# Disable allow_rgb_configs to fix odd color and vaapi issues with Mesa
+export allow_rgb10_configs=false
 
 # Sanitize std{in,out,err} because they'll be shared with untrusted child
 # processes (http://crbug.com/376567).
@@ -52,12 +49,11 @@ exec < /dev/null
 exec > >(exec cat)
 exec 2> >(exec cat >&2)
 
-
-CHROMIUM_DISTRO_FLAGS+=" --enable-plugins \
+CHROMIUM_DISTRO_FLAGS="  --enable-plugins \
                          --enable-extensions \
                          --enable-user-scripts \
-                         --enable-features=WebRTCPipeWireCapturer \
                          --enable-printing \
+                         --enable-gpu-rasterization \
                          --disable-sync \
                          --disable-background-networking \
                          --force-local-ntp \
