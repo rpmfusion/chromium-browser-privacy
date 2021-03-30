@@ -150,6 +150,10 @@ ExclusiveArch:  x86_64
 # Fedora patches:
 Patch300:       chromium-py2-bootstrap.patch
 Patch320:       chromium-widevine-locations.patch
+Patch321:       chromium-fstatfix.patch
+Patch322:       chromium-gcc11.patch
+# Manually applied patches:
+Patch701:       chromium-rawhide-gcc-std-max-fix.patch
 
 # RPM Fusion patches [free/chromium-freeworld]:
 Patch400:       chromium-hw-accel-mjpeg.patch
@@ -158,11 +162,8 @@ Patch402:       chromium-enable-widevine.patch
 Patch403:       chromium-manpage.patch
 Patch404:       chromium-md5-based-build-id.patch
 Patch405:       chromium-names.patch
-Patch406:       chromium-fstatfix.patch
-Patch407:       chromium-gcc11.patch
-%if %{freeworld}
-Patch420:       chromium-rpm-fusion-brand.patch
-%endif
+# Manually applied patches:
+Patch700:       chromium-rpm-fusion-brand.patch
 
 # RPM Fusion patches [free/chromium-browser-privacy]:
 Patch500:       chromium-default-user-data-dir.patch
@@ -207,8 +208,17 @@ browser, ungoogled-chromium is essentially a drop-in replacement for Chromium.
 python3 -B %{ungoogled_chromium_root}/utils/prune_binaries.py . \
   %{ungoogled_chromium_root}/pruning.list
 
-# Apply patches from this spec.
-%autopatch -p1
+# Apply patches up to #600 from this spec.
+%autopatch -M600 -p1
+
+# Manually apply patches that need an ifdef
+%if %{freeworld}
+%patch700 -p1
+%endif
+
+%if 0%{?fedora} >= 35
+%patch701 -p1
+%endif
 
 #Let's change the default shebang of python files.
 find -depth -type f -writable -name "*.py" -exec sed -iE '1s=^#! */usr/bin/\(python\|env python\)[23]\?=#!%{__python2}=' {} +
